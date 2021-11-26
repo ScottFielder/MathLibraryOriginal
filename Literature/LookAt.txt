@@ -1,0 +1,940 @@
+#include "gluos.h"
+#include &lt;math.h&gt;
+#include &lt;GL/gl.h&gt;
+#include &lt;GL/glu.h&gt;
+#include "gluint.h"
+
+/*
+** Make m an identity matrix
+*/
+static void __gluMakeIdentityd(GLdouble m[16])
+{
+    m[0+4*0] = 1; m[0+4*1] = 0; m[0+4*2] = 0; m[0+4*3] = 0;
+    m[1+4*0] = 0; m[1+4*1] = 1; m[1+4*2] = 0; m[1+4*3] = 0;
+    m[2+4*0] = 0; m[2+4*1] = 0; m[2+4*2] = 1; m[2+4*3] = 0;
+    m[3+4*0] = 0; m[3+4*1] = 0; m[3+4*2] = 0; m[3+4*3] = 1;
+}
+
+static void __gluMakeIdentityf(GLfloat m[16])
+{
+    m[0+4*0] = 1; m[0+4*1] = 0; m[0+4*2] = 0; m[0+4*3] = 0;
+    m[1+4*0] = 0; m[1+4*1] = 1; m[1+4*2] = 0; m[1+4*3] = 0;
+    m[2+4*0] = 0; m[2+4*1] = 0; m[2+4*2] = 1; m[2+4*3] = 0;
+    m[3+4*0] = 0; m[3+4*1] = 0; m[3+4*2] = 0; m[3+4*3] = 1;
+}
+
+void GLAPIENTRY
+gluOrtho2D(GLdouble left, GLdouble right, GLdouble bottom, GLdouble top)
+{
+    glOrtho(left, right, bottom, top, -1, 1);
+}
+
+#define __glPi 3.14159265358979323846
+
+void GLAPIENTRY
+gluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar)
+{
+    GLdouble m[4][4];
+    double sine, cotangent, deltaZ;
+    double radians = fovy / 2 * __glPi / 180;
+
+    deltaZ = zFar - zNear;
+    sine = sin(radians);
+    if ((deltaZ == 0) || (sine == 0) || (aspect == 0)) {
+	return;
+    }
+    cotangent = COS(radians) / sine;
+
+    __gluMakeIdentityd(&amp;m[0][0]);
+    m[0][0] = cotangent / aspect;
+    m[1][1] = cotangent;
+    m[2][2] = -(zFar + zNear) / deltaZ;
+    m[2][3] = -1;
+    m[3][2] = -2 * zNear * zFar / deltaZ;
+    m[3][3] = 0;
+    glMultMatrixd(&amp;m[0][0]);
+}
+
+static void normalize(float v[3])
+{
+    float r;
+
+    r = sqrt( v[0]*v[0] + v[1]*v[1] + v[2]*v[2] );
+    if (r == 0.0) return;
+
+    v[0] /= r;
+    v[1] /= r;
+    v[2] /= r;
+}
+
+static void cross(float v1[3], float v2[3], float result[3])
+{
+    result[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    result[1] = v1[2]*v2[0] - v1[0]*v2[2];
+    result[2] = v1[0]*v2[1] - v1[1]*v2[0];
+}
+
+void GLAPIENTRY
+gluLookAt(GLdouble eyex, GLdouble eyey, GLdouble eyez, GLdouble centerx,
+	  GLdouble centery, GLdouble centerz, GLdouble upx, GLdouble upy,
+	  GLdouble upz)
+{
+    float forward[3], side[3], up[3];
+    GLfloat m[4][4];
+
+    forward[0] = centerx - eyex;
+    forward[1] = centery - eyey;
+    forward[2] = centerz - eyez;
+
+    up[0] = upx;
+    up[1] = upy;
+    up[2] = upz;
+
+    normalize(forward);
+
+    /* Side = forward x up */
+    cross(forward, up, side);
+    normalize(side);
+
+    /* Recompute up as: up = side x forward */
+    cross(side, forward, up);
+
+    __gluMakeIdentityf(&amp;m[0][0]);
+    m[0][0] = side[0];
+    m[1][0] = side[1];
+    m[2][0] = side[2];
+
+    m[0][1] = up[0];
+    m[1][1] = up[1];
+    m[2][1] = up[2];
+
+    m[0][2] = -forward[0];
+    m[1][2] = -forward[1];
+    m[2][2] = -forward[2];
+
+    glMultMatrixf(&amp;m[0][0]);
+    glTranslated(-eyex, -eyey, -eyez);
+}
+
+static void __gluMultMatrixVecd(const GLdouble matrix[16], const GLdouble in[4],
+		      GLdouble out[4])
+{
+    int i;
+
+    for (i=0; i&lt;4; i++) {
+	out[i] = 
+	    in[0] * matrix[0*4+i] +
+	    in[1] * matrix[1*4+i] +
+	    in[2] * matrix[2*4+i] +
+	    in[3] * matrix[3*4+i];
+    }
+}
+
+/*
+** Invert 4x4 matrix.
+** Contributed by David Moore (See Mesa bug #6748)
+*/
+static int __gluInvertMatrixd(const GLdouble m[16], GLdouble invOut[16])
+{
+    double inv[16], det;
+    int i;
+
+    inv[0] =   m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15]
+             + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10];
+    inv[4] =  -m[4]*m[10]*m[15] + m[4]*m[11]*m[14] + m[8]*m[6]*m[15]
+             - m[8]*m[7]*m[14] - m[12]*m[6]*m[11] + m[12]*m[7]*m[10];
+    inv[8] =   m[4]*m[9]*m[15] - m[4]*m[11]*m[13] - m[8]*m[5]*m[15]
+             + m[8]*m[7]*m[13] + m[12]*m[5]*m[11] - m[12]*m[7]*m[9];
+    inv[12] = -m[4]*m[9]*m[14] + m[4]*m[10]*m[13] + m[8]*m[5]*m[14]
+             - m[8]*m[6]*m[13] - m[12]*m[5]*m[10] + m[12]*m[6]*m[9];
+    inv[1] =  -m[1]*m[10]*m[15] + m[1]*m[11]*m[14] + m[9]*m[2]*m[15]
+             - m[9]*m[3]*m[14] - m[13]*m[2]*m[11] + m[13]*m[3]*m[10];
+    inv[5] =   m[0]*m[10]*m[15] - m[0]*m[11]*m[14] - m[8]*m[2]*m[15]
+             + m[8]*m[3]*m[14] + m[12]*m[2]*m[11] - m[12]*m[3]*m[10];
+    inv[9] =  -m[0]*m[9]*m[15] + m[0]*m[11]*m[13] + m[8]*m[1]*m[15]
+             - m[8]*m[3]*m[13] - m[12]*m[1]*m[11] + m[12]*m[3]*m[9];
+    inv[13] =  m[0]*m[9]*m[14] - m[0]*m[10]*m[13] - m[8]*m[1]*m[14]
+             + m[8]*m[2]*m[13] + m[12]*m[1]*m[10] - m[12]*m[2]*m[9];
+    inv[2] =   m[1]*m[6]*m[15] - m[1]*m[7]*m[14] - m[5]*m[2]*m[15]
+             + m[5]*m[3]*m[14] + m[13]*m[2]*m[7] - m[13]*m[3]*m[6];
+    inv[6] =  -m[0]*m[6]*m[15] + m[0]*m[7]*m[14] + m[4]*m[2]*m[15]
+             - m[4]*m[3]*m[14] - m[12]*m[2]*m[7] + m[12]*m[3]*m[6];
+    inv[10] =  m[0]*m[5]*m[15] - m[0]*m[7]*m[13] - m[4]*m[1]*m[15]
+             + m[4]*m[3]*m[13] + m[12]*m[1]*m[7] - m[12]*m[3]*m[5];
+    inv[14] = -m[0]*m[5]*m[14] + m[0]*m[6]*m[13] + m[4]*m[1]*m[14]
+             - m[4]*m[2]*m[13] - m[12]*m[1]*m[6] + m[12]*m[2]*m[5];
+    inv[3] =  -m[1]*m[6]*m[11] + m[1]*m[7]*m[10] + m[5]*m[2]*m[11]
+             - m[5]*m[3]*m[10] - m[9]*m[2]*m[7] + m[9]*m[3]*m[6];
+    inv[7] =   m[0]*m[6]*m[11] - m[0]*m[7]*m[10] - m[4]*m[2]*m[11]
+             + m[4]*m[3]*m[10] + m[8]*m[2]*m[7] - m[8]*m[3]*m[6];
+    inv[11] = -m[0]*m[5]*m[11] + m[0]*m[7]*m[9] + m[4]*m[1]*m[11]
+             - m[4]*m[3]*m[9] - m[8]*m[1]*m[7] + m[8]*m[3]*m[5];
+    inv[15] =  m[0]*m[5]*m[10] - m[0]*m[6]*m[9] - m[4]*m[1]*m[10]
+             + m[4]*m[2]*m[9] + m[8]*m[1]*m[6] - m[8]*m[2]*m[5];
+
+    det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
+    if (det == 0)
+        return GL_FALSE;
+
+    det = 1.0 / det;
+
+    for (i = 0; i &lt; 16; i++)
+        invOut[i] = inv[i] * det;
+
+    return GL_TRUE;
+}
+
+static void __gluMultMatricesd(const GLdouble a[16], const GLdouble b[16],
+				GLdouble r[16])
+{
+    int i, j;
+
+    for (i = 0; i &lt; 4; i++) {
+	for (j = 0; j &lt; 4; j++) {
+	    r[i*4+j] = 
+		a[i*4+0]*b[0*4+j] +
+		a[i*4+1]*b[1*4+j] +
+		a[i*4+2]*b[2*4+j] +
+		a[i*4+3]*b[3*4+j];
+	}
+    }
+}
+
+GLint GLAPIENTRY
+gluProject(GLdouble objx, GLdouble objy, GLdouble objz, 
+	      const GLdouble modelMatrix[16], 
+	      const GLdouble projMatrix[16],
+              const GLint viewport[4],
+	      GLdouble *winx, GLdouble *winy, GLdouble *winz)
+{
+    double in[4];
+    double out[4];
+
+    in[0]=objx;
+    in[1]=objy;
+    in[2]=objz;
+    in[3]=1.0;
+    __gluMultMatrixVecd(modelMatrix, in, out);
+    __gluMultMatrixVecd(projMatrix, out, in);
+    if (in[3] == 0.0) return(GL_FALSE);
+    in[0] /= in[3];
+    in[1] /= in[3];
+    in[2] /= in[3];
+    /* Map x, y and z to range 0-1 */
+    in[0] = in[0] * 0.5 + 0.5;
+    in[1] = in[1] * 0.5 + 0.5;
+    in[2] = in[2] * 0.5 + 0.5;
+
+    /* Map x,y to viewport */
+    in[0] = in[0] * viewport[2] + viewport[0];
+    in[1] = in[1] * viewport[3] + viewport[1];
+
+    *winx=in[0];
+    *winy=in[1];
+    *winz=in[2];
+    return(GL_TRUE);
+}
+
+GLint GLAPIENTRY
+gluUnProject(GLdouble winx, GLdouble winy, GLdouble winz,
+		const GLdouble modelMatrix[16], 
+		const GLdouble projMatrix[16],
+                const GLint viewport[4],
+	        GLdouble *objx, GLdouble *objy, GLdouble *objz)
+{
+    double finalMatrix[16];
+    double in[4];
+    double out[4];
+
+    __gluMultMatricesd(modelMatrix, projMatrix, finalMatrix);
+    if (!__gluInvertMatrixd(finalMatrix, finalMatrix)) return(GL_FALSE);
+
+    in[0]=winx;
+    in[1]=winy;
+    in[2]=winz;
+    in[3]=1.0;
+
+    /* Map x and y from window coordinates */
+    in[0] = (in[0] - viewport[0]) / viewport[2];
+    in[1] = (in[1] - viewport[1]) / viewport[3];
+
+    /* Map to range -1 to 1 */
+    in[0] = in[0] * 2 - 1;
+    in[1] = in[1] * 2 - 1;
+    in[2] = in[2] * 2 - 1;
+
+    __gluMultMatrixVecd(finalMatrix, in, out);
+    if (out[3] == 0.0) return(GL_FALSE);
+    out[0] /= out[3];
+    out[1] /= out[3];
+    out[2] /= out[3];
+    *objx = out[0];
+    *objy = out[1];
+    *objz = out[2];
+    return(GL_TRUE);
+}
+
+GLint GLAPIENTRY
+gluUnProject4(GLdouble winx, GLdouble winy, GLdouble winz, GLdouble clipw,
+	      const GLdouble modelMatrix[16], 
+	      const GLdouble projMatrix[16],
+	      const GLint viewport[4],
+	      GLclampd nearVal, GLclampd farVal,		    
+	      GLdouble *objx, GLdouble *objy, GLdouble *objz,
+	      GLdouble *objw)
+{
+    double finalMatrix[16];
+    double in[4];
+    double out[4];
+
+    __gluMultMatricesd(modelMatrix, projMatrix, finalMatrix);
+    if (!__gluInvertMatrixd(finalMatrix, finalMatrix)) return(GL_FALSE);
+
+    in[0]=winx;
+    in[1]=winy;
+    in[2]=winz;
+    in[3]=clipw;
+
+    /* Map x and y from window coordinates */
+    in[0] = (in[0] - viewport[0]) / viewport[2];
+    in[1] = (in[1] - viewport[1]) / viewport[3];
+    in[2] = (in[2] - nearVal) / (farVal - nearVal);
+
+    /* Map to range -1 to 1 */
+    in[0] = in[0] * 2 - 1;
+    in[1] = in[1] * 2 - 1;
+    in[2] = in[2] * 2 - 1;
+
+    __gluMultMatrixVecd(finalMatrix, in, out);
+    if (out[3] == 0.0) return(GL_FALSE);
+    *objx = out[0];
+    *objy = out[1];
+    *objz = out[2];
+    *objw = out[3];
+    return(GL_TRUE);
+}
+
+void GLAPIENTRY
+gluPickMatrix(GLdouble x, GLdouble y, GLdouble deltax, GLdouble deltay,
+		  GLint viewport[4])
+{
+    if (deltax &lt;= 0 || deltay &lt;= 0) { 
+	return;
+    }
+
+    /* Translate and scale the picked region to the entire window */
+    glTranslatef((viewport[2] - 2 * (x - viewport[0])) / deltax,
+	    (viewport[3] - 2 * (y - viewport[1])) / deltay, 0);
+    glScalef(viewport[2] / deltax, viewport[3] / deltay, 1.0);
+}
+
+////GLM version
+mat4x4 lookAt(vec3  const & eye, vec3  const & center, vec3  const & up)
+{
+vec3  f = normalize(center - eye);
+vec3  u = normalize(up);
+vec3  s = normalize(cross(f, u));
+u = cross(s, f);
+
+mat4x4 Result(1);
+Result[0][0] = s.x;
+Result[1][0] = s.y;
+Result[2][0] = s.z;
+Result[0][1] = u.x;
+Result[1][1] = u.y;
+Result[2][1] = u.z;
+Result[0][2] =-f.x;
+Result[1][2] =-f.y;
+Result[2][2] =-f.z;
+Result[3][0] =-dot(s, eye);
+Result[3][1] =-dot(u, eye);
+Result[3][2] = dot(f, eye);
+return Result;
+}
+
+
+
+
+Actual source code:
+/// @ref gtc_matrix_transform
+/// @file glm/gtc/matrix_transform.inl
+
+#include "../geometric.hpp"
+#include "../trigonometric.hpp"
+#include "../matrix.hpp"
+
+namespace glm
+{
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> translate(tmat4x4<T, P> const & m, tvec3<T, P> const & v)
+	{
+		tmat4x4<T, P> Result(m);
+		Result[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
+		return Result;
+	}
+	
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> rotate(tmat4x4<T, P> const & m, T angle, tvec3<T, P> const & v)
+	{
+		T const a = angle;
+		T const c = cos(a);
+		T const s = sin(a);
+
+		tvec3<T, P> axis(normalize(v));
+		tvec3<T, P> temp((T(1) - c) * axis);
+
+		tmat4x4<T, P> Rotate(uninitialize);
+		Rotate[0][0] = c + temp[0] * axis[0];
+		Rotate[0][1] = temp[0] * axis[1] + s * axis[2];
+		Rotate[0][2] = temp[0] * axis[2] - s * axis[1];
+
+		Rotate[1][0] = temp[1] * axis[0] - s * axis[2];
+		Rotate[1][1] = c + temp[1] * axis[1];
+		Rotate[1][2] = temp[1] * axis[2] + s * axis[0];
+
+		Rotate[2][0] = temp[2] * axis[0] + s * axis[1];
+		Rotate[2][1] = temp[2] * axis[1] - s * axis[0];
+		Rotate[2][2] = c + temp[2] * axis[2];
+
+		tmat4x4<T, P> Result(uninitialize);
+		Result[0] = m[0] * Rotate[0][0] + m[1] * Rotate[0][1] + m[2] * Rotate[0][2];
+		Result[1] = m[0] * Rotate[1][0] + m[1] * Rotate[1][1] + m[2] * Rotate[1][2];
+		Result[2] = m[0] * Rotate[2][0] + m[1] * Rotate[2][1] + m[2] * Rotate[2][2];
+		Result[3] = m[3];
+		return Result;
+	}
+		
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> rotate_slow(tmat4x4<T, P> const & m, T angle, tvec3<T, P> const & v)
+	{
+		T const a = angle;
+		T const c = cos(a);
+		T const s = sin(a);
+		tmat4x4<T, P> Result;
+
+		tvec3<T, P> axis = normalize(v);
+
+		Result[0][0] = c + (static_cast<T>(1) - c)      * axis.x     * axis.x;
+		Result[0][1] = (static_cast<T>(1) - c) * axis.x * axis.y + s * axis.z;
+		Result[0][2] = (static_cast<T>(1) - c) * axis.x * axis.z - s * axis.y;
+		Result[0][3] = static_cast<T>(0);
+
+		Result[1][0] = (static_cast<T>(1) - c) * axis.y * axis.x - s * axis.z;
+		Result[1][1] = c + (static_cast<T>(1) - c) * axis.y * axis.y;
+		Result[1][2] = (static_cast<T>(1) - c) * axis.y * axis.z + s * axis.x;
+		Result[1][3] = static_cast<T>(0);
+
+		Result[2][0] = (static_cast<T>(1) - c) * axis.z * axis.x + s * axis.y;
+		Result[2][1] = (static_cast<T>(1) - c) * axis.z * axis.y - s * axis.x;
+		Result[2][2] = c + (static_cast<T>(1) - c) * axis.z * axis.z;
+		Result[2][3] = static_cast<T>(0);
+
+		Result[3] = tvec4<T, P>(0, 0, 0, 1);
+		return m * Result;
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> scale(tmat4x4<T, P> const & m, tvec3<T, P> const & v)
+	{
+		tmat4x4<T, P> Result(uninitialize);
+		Result[0] = m[0] * v[0];
+		Result[1] = m[1] * v[1];
+		Result[2] = m[2] * v[2];
+		Result[3] = m[3];
+		return Result;
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> scale_slow(tmat4x4<T, P> const & m, tvec3<T, P> const & v)
+	{
+		tmat4x4<T, P> Result(T(1));
+		Result[0][0] = v.x;
+		Result[1][1] = v.y;
+		Result[2][2] = v.z;
+		return m * Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> ortho
+	(
+		T left, T right,
+		T bottom, T top,
+		T zNear, T zFar
+	)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return orthoLH(left, right, bottom, top, zNear, zFar);
+#		else
+			return orthoRH(left, right, bottom, top, zNear, zFar);
+#		endif
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> orthoLH
+	(
+		T left, T right,
+		T bottom, T top,
+		T zNear, T zFar
+	)
+	{
+		tmat4x4<T, defaultp> Result(1);
+		Result[0][0] = static_cast<T>(2) / (right - left);
+		Result[1][1] = static_cast<T>(2) / (top - bottom);
+		Result[3][0] = - (right + left) / (right - left);
+		Result[3][1] = - (top + bottom) / (top - bottom);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = static_cast<T>(1) / (zFar - zNear);
+			Result[3][2] = - zNear / (zFar - zNear);
+#		else
+			Result[2][2] = static_cast<T>(2) / (zFar - zNear);
+			Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> orthoRH
+	(
+		T left, T right,
+		T bottom, T top,
+		T zNear, T zFar
+	)
+	{
+		tmat4x4<T, defaultp> Result(1);
+		Result[0][0] = static_cast<T>(2) / (right - left);
+		Result[1][1] = static_cast<T>(2) / (top - bottom);
+		Result[3][0] = - (right + left) / (right - left);
+		Result[3][1] = - (top + bottom) / (top - bottom);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = - static_cast<T>(1) / (zFar - zNear);
+			Result[3][2] = - zNear / (zFar - zNear);
+#		else
+			Result[2][2] = - static_cast<T>(2) / (zFar - zNear);
+			Result[3][2] = - (zFar + zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> ortho
+	(
+		T left, T right,
+		T bottom, T top
+	)
+	{
+		tmat4x4<T, defaultp> Result(static_cast<T>(1));
+		Result[0][0] = static_cast<T>(2) / (right - left);
+		Result[1][1] = static_cast<T>(2) / (top - bottom);
+		Result[2][2] = - static_cast<T>(1);
+		Result[3][0] = - (right + left) / (right - left);
+		Result[3][1] = - (top + bottom) / (top - bottom);
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> frustum
+	(
+		T left, T right,
+		T bottom, T top,
+		T nearVal, T farVal
+	)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return frustumLH(left, right, bottom, top, nearVal, farVal);
+#		else
+			return frustumRH(left, right, bottom, top, nearVal, farVal);
+#		endif
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> frustumLH
+	(
+		T left, T right,
+		T bottom, T top,
+		T nearVal, T farVal
+	)
+	{
+		tmat4x4<T, defaultp> Result(0);
+		Result[0][0] = (static_cast<T>(2) * nearVal) / (right - left);
+		Result[1][1] = (static_cast<T>(2) * nearVal) / (top - bottom);
+		Result[2][0] = (right + left) / (right - left);
+		Result[2][1] = (top + bottom) / (top - bottom);
+		Result[2][3] = static_cast<T>(1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = farVal / (farVal - nearVal);
+			Result[3][2] = -(farVal * nearVal) / (farVal - nearVal);
+#		else
+			Result[2][2] = (farVal + nearVal) / (farVal - nearVal);
+			Result[3][2] = - (static_cast<T>(2) * farVal * nearVal) / (farVal - nearVal);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> frustumRH
+	(
+		T left, T right,
+		T bottom, T top,
+		T nearVal, T farVal
+	)
+	{
+		tmat4x4<T, defaultp> Result(0);
+		Result[0][0] = (static_cast<T>(2) * nearVal) / (right - left);
+		Result[1][1] = (static_cast<T>(2) * nearVal) / (top - bottom);
+		Result[2][0] = (right + left) / (right - left);
+		Result[2][1] = (top + bottom) / (top - bottom);
+		Result[2][3] = static_cast<T>(-1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = farVal / (nearVal - farVal);
+			Result[3][2] = -(farVal * nearVal) / (farVal - nearVal);
+#		else
+			Result[2][2] = - (farVal + nearVal) / (farVal - nearVal);
+			Result[3][2] = - (static_cast<T>(2) * farVal * nearVal) / (farVal - nearVal);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspective(T fovy, T aspect, T zNear, T zFar)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return perspectiveLH(fovy, aspect, zNear, zFar);
+#		else
+			return perspectiveRH(fovy, aspect, zNear, zFar);
+#		endif
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspectiveRH(T fovy, T aspect, T zNear, T zFar)
+	{
+		assert(abs(aspect - std::numeric_limits<T>::epsilon()) > static_cast<T>(0));
+
+		T const tanHalfFovy = tan(fovy / static_cast<T>(2));
+
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][3] = - static_cast<T>(1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = zFar / (zNear - zFar);
+			Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+#		else
+			Result[2][2] = - (zFar + zNear) / (zFar - zNear);
+			Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+	
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspectiveLH(T fovy, T aspect, T zNear, T zFar)
+	{
+		assert(abs(aspect - std::numeric_limits<T>::epsilon()) > static_cast<T>(0));
+
+		T const tanHalfFovy = tan(fovy / static_cast<T>(2));
+		
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = static_cast<T>(1) / (aspect * tanHalfFovy);
+		Result[1][1] = static_cast<T>(1) / (tanHalfFovy);
+		Result[2][3] = static_cast<T>(1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = zFar / (zFar - zNear);
+			Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+#		else
+			Result[2][2] = (zFar + zNear) / (zFar - zNear);
+			Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspectiveFov(T fov, T width, T height, T zNear, T zFar)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return perspectiveFovLH(fov, width, height, zNear, zFar);
+#		else
+			return perspectiveFovRH(fov, width, height, zNear, zFar);
+#		endif
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspectiveFovRH(T fov, T width, T height, T zNear, T zFar)
+	{
+		assert(width > static_cast<T>(0));
+		assert(height > static_cast<T>(0));
+		assert(fov > static_cast<T>(0));
+	
+		T const rad = fov;
+		T const h = glm::cos(static_cast<T>(0.5) * rad) / glm::sin(static_cast<T>(0.5) * rad);
+		T const w = h * height / width; ///todo max(width , Height) / min(width , Height)?
+
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = w;
+		Result[1][1] = h;
+		Result[2][3] = - static_cast<T>(1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = zFar / (zNear - zFar);
+			Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+#		else
+			Result[2][2] = - (zFar + zNear) / (zFar - zNear);
+			Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> perspectiveFovLH(T fov, T width, T height, T zNear, T zFar)
+	{
+		assert(width > static_cast<T>(0));
+		assert(height > static_cast<T>(0));
+		assert(fov > static_cast<T>(0));
+	
+		T const rad = fov;
+		T const h = glm::cos(static_cast<T>(0.5) * rad) / glm::sin(static_cast<T>(0.5) * rad);
+		T const w = h * height / width; ///todo max(width , Height) / min(width , Height)?
+
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = w;
+		Result[1][1] = h;
+		Result[2][3] = static_cast<T>(1);
+
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			Result[2][2] = zFar / (zFar - zNear);
+			Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+#		else
+			Result[2][2] = (zFar + zNear) / (zFar - zNear);
+			Result[3][2] = - (static_cast<T>(2) * zFar * zNear) / (zFar - zNear);
+#		endif
+
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> infinitePerspective(T fovy, T aspect, T zNear)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return infinitePerspectiveLH(fovy, aspect, zNear);
+#		else
+			return infinitePerspectiveRH(fovy, aspect, zNear);
+#		endif
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> infinitePerspectiveRH(T fovy, T aspect, T zNear)
+	{
+		T const range = tan(fovy / static_cast<T>(2)) * zNear;
+		T const left = -range * aspect;
+		T const right = range * aspect;
+		T const bottom = -range;
+		T const top = range;
+
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = (static_cast<T>(2) * zNear) / (right - left);
+		Result[1][1] = (static_cast<T>(2) * zNear) / (top - bottom);
+		Result[2][2] = - static_cast<T>(1);
+		Result[2][3] = - static_cast<T>(1);
+		Result[3][2] = - static_cast<T>(2) * zNear;
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> infinitePerspectiveLH(T fovy, T aspect, T zNear)
+	{
+		T const range = tan(fovy / static_cast<T>(2)) * zNear;
+		T const left = -range * aspect;
+		T const right = range * aspect;
+		T const bottom = -range;
+		T const top = range;
+
+		tmat4x4<T, defaultp> Result(T(0));
+		Result[0][0] = (static_cast<T>(2) * zNear) / (right - left);
+		Result[1][1] = (static_cast<T>(2) * zNear) / (top - bottom);
+		Result[2][2] = static_cast<T>(1);
+		Result[2][3] = static_cast<T>(1);
+		Result[3][2] = - static_cast<T>(2) * zNear;
+		return Result;
+	}
+
+	// Infinite projection matrix: http://www.terathon.com/gdc07_lengyel.pdf
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> tweakedInfinitePerspective(T fovy, T aspect, T zNear, T ep)
+	{
+		T const range = tan(fovy / static_cast<T>(2)) * zNear;	
+		T const left = -range * aspect;
+		T const right = range * aspect;
+		T const bottom = -range;
+		T const top = range;
+
+		tmat4x4<T, defaultp> Result(static_cast<T>(0));
+		Result[0][0] = (static_cast<T>(2) * zNear) / (right - left);
+		Result[1][1] = (static_cast<T>(2) * zNear) / (top - bottom);
+		Result[2][2] = ep - static_cast<T>(1);
+		Result[2][3] = static_cast<T>(-1);
+		Result[3][2] = (ep - static_cast<T>(2)) * zNear;
+		return Result;
+	}
+
+	template <typename T>
+	GLM_FUNC_QUALIFIER tmat4x4<T, defaultp> tweakedInfinitePerspective(T fovy, T aspect, T zNear)
+	{
+		return tweakedInfinitePerspective(fovy, aspect, zNear, epsilon<T>());
+	}
+
+	template <typename T, typename U, precision P>
+	GLM_FUNC_QUALIFIER tvec3<T, P> project
+	(
+		tvec3<T, P> const & obj,
+		tmat4x4<T, P> const & model,
+		tmat4x4<T, P> const & proj,
+		tvec4<U, P> const & viewport
+	)
+	{
+		tvec4<T, P> tmp = tvec4<T, P>(obj, static_cast<T>(1));
+		tmp = model * tmp;
+		tmp = proj * tmp;
+
+		tmp /= tmp.w;
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			tmp.x = tmp.x * static_cast<T>(0.5) + static_cast<T>(0.5);
+			tmp.y = tmp.y * static_cast<T>(0.5) + static_cast<T>(0.5);
+#		else
+			tmp = tmp * static_cast<T>(0.5) + static_cast<T>(0.5);
+#		endif
+		tmp[0] = tmp[0] * T(viewport[2]) + T(viewport[0]);
+		tmp[1] = tmp[1] * T(viewport[3]) + T(viewport[1]);
+
+		return tvec3<T, P>(tmp);
+	}
+
+	template <typename T, typename U, precision P>
+	GLM_FUNC_QUALIFIER tvec3<T, P> unProject
+	(
+		tvec3<T, P> const & win,
+		tmat4x4<T, P> const & model,
+		tmat4x4<T, P> const & proj,
+		tvec4<U, P> const & viewport
+	)
+	{
+		tmat4x4<T, P> Inverse = inverse(proj * model);
+
+		tvec4<T, P> tmp = tvec4<T, P>(win, T(1));
+		tmp.x = (tmp.x - T(viewport[0])) / T(viewport[2]);
+		tmp.y = (tmp.y - T(viewport[1])) / T(viewport[3]);
+#		if GLM_DEPTH_CLIP_SPACE == GLM_DEPTH_ZERO_TO_ONE
+			tmp.x = tmp.x * static_cast<T>(2) - static_cast<T>(1);
+			tmp.y = tmp.y * static_cast<T>(2) - static_cast<T>(1);
+#		else
+			tmp = tmp * static_cast<T>(2) - static_cast<T>(1);
+#		endif
+
+		tvec4<T, P> obj = Inverse * tmp;
+		obj /= obj.w;
+
+		return tvec3<T, P>(obj);
+	}
+
+	template <typename T, precision P, typename U>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> pickMatrix(tvec2<T, P> const & center, tvec2<T, P> const & delta, tvec4<U, P> const & viewport)
+	{
+		assert(delta.x > static_cast<T>(0) && delta.y > static_cast<T>(0));
+		tmat4x4<T, P> Result(static_cast<T>(1));
+
+		if(!(delta.x > static_cast<T>(0) && delta.y > static_cast<T>(0)))
+			return Result; // Error
+
+		tvec3<T, P> Temp(
+			(static_cast<T>(viewport[2]) - static_cast<T>(2) * (center.x - static_cast<T>(viewport[0]))) / delta.x,
+			(static_cast<T>(viewport[3]) - static_cast<T>(2) * (center.y - static_cast<T>(viewport[1]))) / delta.y,
+			static_cast<T>(0));
+
+		// Translate and scale the picked region to the entire window
+		Result = translate(Result, Temp);
+		return scale(Result, tvec3<T, P>(static_cast<T>(viewport[2]) / delta.x, static_cast<T>(viewport[3]) / delta.y, static_cast<T>(1)));
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> lookAt(tvec3<T, P> const & eye, tvec3<T, P> const & center, tvec3<T, P> const & up)
+	{
+#		if GLM_COORDINATE_SYSTEM == GLM_LEFT_HANDED
+			return lookAtLH(eye, center, up);
+#		else
+			return lookAtRH(eye, center, up);
+#		endif
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> lookAtRH
+	(
+		tvec3<T, P> const & eye,
+		tvec3<T, P> const & center,
+		tvec3<T, P> const & up
+	)
+	{
+		tvec3<T, P> const f(normalize(center - eye));
+		tvec3<T, P> const s(normalize(cross(f, up)));
+		tvec3<T, P> const u(cross(s, f));
+
+		tmat4x4<T, P> Result(1);
+		Result[0][0] = s.x;0
+		Result[1][0] = s.y;4
+		Result[2][0] = s.z;8
+		Result[0][1] = u.x;1
+		Result[1][1] = u.y;5
+		Result[2][1] = u.z;9
+		Result[0][2] =-f.x;2
+		Result[1][2] =-f.y;6
+		Result[2][2] =-f.z;10
+		Result[3][0] =-dot(s, eye);
+		Result[3][1] =-dot(u, eye);
+		Result[3][2] = dot(f, eye);
+		return Result;
+	}
+
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tmat4x4<T, P> lookAtLH
+	(
+		tvec3<T, P> const & eye,
+		tvec3<T, P> const & center,
+		tvec3<T, P> const & up
+	)
+	{
+		tvec3<T, P> const f(normalize(center - eye));
+		tvec3<T, P> const s(normalize(cross(up, f)));
+		tvec3<T, P> const u(cross(f, s));
+
+		tmat4x4<T, P> Result(1);
+		Result[0][0] = s.x;
+		Result[1][0] = s.y;
+		Result[2][0] = s.z;
+		Result[0][1] = u.x;
+		Result[1][1] = u.y;
+		Result[2][1] = u.z;
+		Result[0][2] = f.x;
+		Result[1][2] = f.y;
+		Result[2][2] = f.z;
+		Result[3][0] = -dot(s, eye);
+		Result[3][1] = -dot(u, eye);
+		Result[3][2] = -dot(f, eye);
+		return Result;
+	}
+}//namespace glm
+
+
+
+
+
+
+
