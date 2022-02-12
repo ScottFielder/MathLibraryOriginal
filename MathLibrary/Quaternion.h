@@ -51,13 +51,13 @@ namespace  MATH {
 		}
 
 		/// Multiply a two quaternions - using the right-hand rule  
-		inline const Quaternion operator * (const Quaternion& q) const {
 		// 2022-02-12 Umer Noor edit. I think there is a bug here
 		// I'll change the Vec3 on the stack to be ijk_result and
 		// see if that helps. Compiler might be grabbing the ijk member
 		// variable in the return line rather than the stack variable
 		//Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
-		Vec3 ijk_result(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
+		inline const Quaternion operator * (const Quaternion& q) const {
+			Vec3 ijk_result(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
 			return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk_result);
 		}
 
