@@ -28,6 +28,11 @@ Quaternion QMath::pow(const Quaternion& q, float exponent) {
 	return Quaternion(cos(newAlpha), q.ijk * sin(newAlpha) / sin(alpha));
 }
 
+
+Quaternion QMath::normalize(const Quaternion& q){
+return q / magnitude(q);
+}
+
 Euler QMath::fromQuaternion(const Quaternion& q) {
 	Euler result;
 	result.roll = atan2(2.0f * (q.ijk.x * q.ijk.y + q.w * q.ijk.z), q.w * q.w + q.ijk.x * q.ijk.x - q.ijk.y * q.ijk.y - q.ijk.z * q.ijk.z);

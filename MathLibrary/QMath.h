@@ -15,6 +15,9 @@ namespace MATH{
 		static float magnitude(const Quaternion& q);
 		static Quaternion pow(const Quaternion& q, float exponent);
 
+		// 2022-02-12 Umer Noor edit. Putting in a normalize method
+		static Quaternion normalize(const Quaternion& q);
+
 		static Quaternion angleAxisRotation(const float degrees, const Vec3& axis);
 		static Vec3 rotate(const Vec3& v, const Quaternion& q);
 

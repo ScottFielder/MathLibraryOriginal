@@ -51,37 +51,31 @@ namespace  MATH {
 		}
 
 		/// Multiply a two quaternions - using the right-hand rule  
-		inline const Quaternion operator * (const Quaternion& q) const {
-			Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
-			return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk);
-		}
+	inline const Quaternion operator * (const Quaternion& q) const {
+		// 2022-02-12 Umer Noor edit. I think there is a bug here
+		// I'll change the Vec3 on the stack to be ijk_result and
+		// see if that helps. Compiler might be grabbing the ijk member
+		// variable in the return line rather than the stack variable
+		//Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
+		Vec3 ijk_result(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
+		return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk_result);
+	}
 
-		/// Add two quaternions
+
 		inline const Quaternion operator + (const Quaternion q) const {
 			return Quaternion(w + q.w, ijk.x + q.ijk.x, ijk.y + q.ijk.y, ijk.z + q.ijk.z);
 		}
 
-		/// Subtract Two quaternions
 		inline const Quaternion operator - (const Quaternion q) const {
 			return Quaternion(w - q.w, ijk.x - q.ijk.x, ijk.y - q.ijk.y, ijk.z - q.ijk.z);
 		}
 
-		/// Multiply a quaternion by a scalar
 		inline const Quaternion operator * (const float scalar) const {
 			return Quaternion(w * scalar, ijk.x * scalar, ijk.y * scalar, ijk.z * scalar);
 		}
 
-		/// Multiply a scalar by a quaternion
-		friend Quaternion operator * (const float s, const Quaternion& q) {
-			return q * s;
-		}
-
-		/// Divide a quaternion by a scalar
 		inline const Quaternion operator / (const float scalar) const {
 			return Quaternion(w / scalar, ijk.x / scalar, ijk.y / scalar, ijk.z / scalar);
-		}
-		friend Quaternion operator / (const float s, const Quaternion& q) {
-			return q / s;
 		}
 
 		/// Now we can use the Quaternion like an array but we'll need two overloads
@@ -95,11 +89,13 @@ namespace  MATH {
 
 		inline void print(const char* comment = nullptr) {
 			if (comment) printf("%s\n", comment);
-			printf("%1.8f %1.8fi %1.8fj %1.8fk\n", w, ijk.x, ijk.y, ijk.z);
+			printf("%1.8f %1.8f %1.8f %1.8f\n", w, ijk.x, ijk.y, ijk.z);
 		}
 
 
-		
+		/////////////////////////////////////////////////////////////////////////
+		/// This is just for teaching purposes - Caution, I'm getting out of control
+		/////////////////////////////////////////////////////////////////////////
 		/// Multiply a quaternion by a Vec3 (Quaternion * Vec3) 
 		inline const Vec3 operator * (const Vec3& v_) const {
 			/// Promote the Vec3 to a Quaternion and set w to be 0.0
