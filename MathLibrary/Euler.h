@@ -3,7 +3,6 @@
 #include <iostream> 
 namespace MATH {
 	union Euler {
-
 		struct {
 			float xAxis, yAxis, zAxis; 
 		};
@@ -39,7 +38,7 @@ namespace MATH {
 			set(e.xAxis, e.yAxis, e.zAxis);
 			return *this;
 		}
-
+		
 		/// Multiply a Euler by a scalar
 		inline const Euler  operator * (const float s) const {
 			return Euler(s*xAxis, s*yAxis, s*zAxis);
@@ -58,7 +57,6 @@ namespace MATH {
 			return *this;
 		}
 
-		/// An assignment operator   
 		inline void print (const char* comment = nullptr) {
 			if (comment) printf("%s\n", comment);
 			printf("%1.8f %1.8f %1.8f\n", xAxis, yAxis, zAxis);

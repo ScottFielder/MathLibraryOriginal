@@ -9,7 +9,7 @@ namespace MATH {
 	public:
 		static Matrix3 EulerToMatirix3(const Euler& e);
 		static Euler Matrix3ToEuler(const Matrix3 &m);
+		
 	};
-
 }
 #endif

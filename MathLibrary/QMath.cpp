@@ -94,7 +94,7 @@ Quaternion QMath::angleAxisRotation(const float degrees, const Vec3& axis) {
 	return Quaternion(cosVal, rotationAxis * sinVal);
 }
 
-
+/// Given  Vector v and Quaternion q, return a rotated Vector by q.  
 Vec3 QMath::rotate(const Vec3& v, const Quaternion& q) {
 	/// This is the beauty of Quaternions 
 	Quaternion p(0.0, v); /// convert the incoming vector to a Quaternion
