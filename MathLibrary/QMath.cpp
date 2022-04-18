@@ -91,7 +91,8 @@ Quaternion QMath::angleAxisRotation(const float degrees, const Vec3& axis) {
 	float theta = degrees * DEGREES_TO_RADIANS;
 	float cosVal = cos(theta / 2.0f);
 	float sinVal = sin(theta / 2.0f);
-	return Quaternion(cosVal, rotationAxis * sinVal);
+	Quaternion result = Quaternion(cosVal, rotationAxis * sinVal);
+	return result;
 }
 
 /// Given  Vector v and Quaternion q, return a rotated Vector by q.  
@@ -102,13 +103,35 @@ Vec3 QMath::rotate(const Vec3& v, const Quaternion& q) {
 	Quaternion result = q * p * qInv;
 	return Vec3(result.ijk);
 
-	/// I got the idea to do it this way from glm. Its faster says glm. 
-	/***Vec3 quatVector(q.v);
+	/*** I got the idea to do it this way from glm. They say it is faster. 
+	Vec3 quatVector(q.v);
 	Vec3 uv = VMath::cross(q.v, v);
 	Vec3 uuv = VMath::cross(q.v, uv);
 	return v + ((uv * q.w) + uuv) * 2.0f;***/
 
 
+}
+
+
+Quaternion QMath::slerp(const Quaternion& qa, const Quaternion& qb, float t) {	
+	Quaternion q1 = qa;
+	Quaternion q2 = qb;
+	float cosTheta = dot(q1, q2); /// if cosTheta is nearly 1.0 will cause divide by zero error
+
+	if (cosTheta < 0.0f) {		/// if cosTheta is negative, the angle is oblique. The shortest path 
+		q2 = -q2;				/// would be the other representation of the same angle -q2 
+	}
+
+	float theta = acos(cosTheta);
+	float sinTheta = sin(theta); /// or sqrt(1.0 - cosTheta * cosTheta)
+
+	float temp1 = ( sin((1.0f - t) * theta)) / sinTheta;
+	float temp2 = sin(t * theta) / sinTheta;
+	return Quaternion(	temp1 * q1.ijk.x + temp2 * q2.ijk.x,
+						temp1 * q1.ijk.y + temp2 * q2.ijk.y,
+						temp1 * q1.ijk.z + temp2 * q2.ijk.z,
+						temp1 * q1.w + temp2 * q2.w);
+		
 }
 
 

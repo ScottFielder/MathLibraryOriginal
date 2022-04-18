@@ -39,6 +39,7 @@ void planeTest();
 void quaternionTest();
 void hashTest();
 void determinantTest();
+void slerpTest();
 
 /// Utility print() calls for glm to Scott's math library format 
 void glmPrintM4(glm::mat4  mat, const char* comment = nullptr);
@@ -53,9 +54,24 @@ using namespace std;
 
 
 int main(int argc, char*argv[]) {
-
+	//slerpTest();
+	quaternionTest();
 
 	
+}
+
+
+void slerpTest() {
+	/// glm version 
+	vec3 eulerAngles(radians(90.0), radians(45.0), radians(0.0));
+	quat myQuaternion = quat(eulerAngles);
+	glmPrintQ(myQuaternion, "glm Quat");
+
+	/// my version 
+	
+	Euler e9(90.0, 45.0, 0.0);
+	Quaternion q3 = QMath::fromEuler(e9);
+	q3.print("my Quat");
 }
 
 void determinantTest(){
@@ -138,30 +154,21 @@ void hashTest(){
 }
 
 void quaternionTest() {
+	
 	/// glm version 
-	vec3 eulerAngles(radians(90.0), radians(45.0), radians(0.0));
-	quat myQuaternion = quat(eulerAngles);
+	
+	glm::quat myQuaternion = glm::angleAxis(glm::radians(90.f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glmPrintQ(myQuaternion, "glm Quat");
 
 	/// my version 
-	
-	Euler e9(90.0, 45.0, 0.0);
-	Quaternion q3 = QMath::fromEuler(e9);
+	Quaternion q3 = QMath::angleAxisRotation(90.0,Vec3(0.0f,0.0f,1.0f));
 	q3.print("my Quat");
 
-	eulerAngles = glm::eulerAngles(myQuaternion);
-	glmPrintV3(eulerAngles, "glm from quat");
-
-	e9 = QMath::fromQuaternion(q3);
-	e9.print("from Quat");
-
-
-
-	mat4 glmRot = glm::toMat4(myQuaternion);
+	glm::mat4 glmRot = glm::toMat4(myQuaternion);
 	glmPrintM4(glmRot,"glm rotation Matrix");
 	
 
-	
+
 	Matrix4 meMat = QMath::toMatrix4(q3);
 	meMat.print("My matrix");
 
@@ -180,24 +187,20 @@ void quaternionTest() {
 
 	Quaternion qe = QMath::fromEuler(e);
 	
-	
-	
-
 	qe.print("from Euler");
-	Quaternion p(0.0, v);
-	Vec3 v2 = q * v * ~q;
+	Vec3 v2 = qe * v * ~qe;
 	v2.print("The slow way");
 
 
 
-	Vec3 v3 = QMath::rotate(v, q);
+	Vec3 v3 = QMath::rotate(v, qe);
 	v3.print("faster way");
 
-	Matrix3 m3 = QMath::toMatrix3(q);
+	Matrix3 m3 = QMath::toMatrix3(qe);
 	Vec3 v4 = m3 * v;
 	v4.print("Mat3");
 
-	Matrix4 m4 = QMath::toMatrix4(q);
+	Matrix4 m4 = QMath::toMatrix4(qe);
 	Vec3 v5 = m4 * v;
 	v5.print("Mat4");
 
@@ -215,6 +218,7 @@ void quaternionTest() {
 
 	Quaternion q4 = q * inv_q;
 	q4.print("q * q-1 is the identity");
+
 }
 
 

@@ -14,12 +14,6 @@ namespace  MATH {
 		/// Just a little utility to populate a quaternion
 		inline void set(float w_, float x_, float y_, float z_) {
 			w = w_; ijk.x = x_; ijk.y = y_; ijk.z = z_;
-
-			/// The memory layout is understood Dr. R!			
-		  /**static_cast<float*>(&w+0) = w_;
-			*static_cast<float*>(&w+1) = x_;
-			*static_cast<float*>(&w+2) = y_;
-			*static_cast<float*>(&w+3) = z_;*/
 		}
 
 		/// This is the unit quaterion by definition 
@@ -30,8 +24,9 @@ namespace  MATH {
 		inline Quaternion(float w_, float x_, float y_, float z_) {
 			set(w_, x_, y_, z_);
 		}
-		inline Quaternion(float w_, const Vec3& v) {
-			set(w_, v.x, v.y, v.z);
+
+		inline Quaternion(float w_, const Vec3& ijk_) {
+			set(w_, ijk_.x, ijk_.y, ijk_.z);
 		}
 
 		/// A copy constructor
@@ -54,11 +49,6 @@ namespace  MATH {
 		/// 2022-02-12 Scott edit. Worried that Umer uncovered a bug in my code,
 		/// I derived the multiply over again (this time less sexy) and it seems to work 
 		/// correctly.
-
-		// 2022-02-12 Umer Noor edit. I think there is a bug here
-		// I'll change the Vec3 on the stack to be ijk_result and
-		// see if that helps. Compiler might be grabbing the ijk member
-		// variable in the return line rather than the stack variable
 		inline const Quaternion operator * (const Quaternion& q) const {
 			Quaternion result;
 			result.w = (w * q.w) - (ijk.x * q.ijk.x) - (ijk.y * q.ijk.y) - (ijk.z * q.ijk.z);
@@ -66,12 +56,21 @@ namespace  MATH {
 			result.ijk.y = (w * q.ijk.y) + (ijk.y * q.w) + (ijk.x * q.ijk.z) - (ijk.z * q.ijk.x);
 			result.ijk.z = (w * q.ijk.z) + (ijk.z * q.w) + (ijk.y * q.ijk.x) - (ijk.x * q.ijk.y);
 			return result;
-			/// This appears to be broken
-			///Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
+			// 2022-02-12 Umer Noor edit. I think there is a bug here
+			// I'll change the Vec3 on the stack to be ijk_result and
+			// see if that helps. Compiler might be grabbing the ijk member
+			// variable in the return line rather than the stack variable
+
+			/// Perhaps too sexy
+			/// Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
 			/// Vec3 ijk_result((w * q.ijk) + (q.w * ijk) + VMath::cross(ijk, q.ijk));
-			///return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk_result);
+			/// return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk_result);
 		}
 
+		inline const Quaternion& operator *= (const Quaternion& q) {
+			*this = q * *this;
+			return *this;
+		}
 
 		inline const Quaternion operator + (const Quaternion q) const {
 			return Quaternion(w + q.w, ijk.x + q.ijk.x, ijk.y + q.ijk.y, ijk.z + q.ijk.z);
