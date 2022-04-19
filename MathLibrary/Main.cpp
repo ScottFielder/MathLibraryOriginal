@@ -62,16 +62,19 @@ int main(int argc, char*argv[]) {
 
 
 void slerpTest() {
-	/// glm version 
-	vec3 eulerAngles(radians(90.0), radians(45.0), radians(0.0));
-	quat myQuaternion = quat(eulerAngles);
-	glmPrintQ(myQuaternion, "glm Quat");
+	Euler e1(90.0f, 0.0f, 0.0f);
+	Quaternion q1 = QMath::fromEuler(e1);
+	q1.print("Start");
 
-	/// my version 
-	
-	Euler e9(90.0, 45.0, 0.0);
-	Quaternion q3 = QMath::fromEuler(e9);
-	q3.print("my Quat");
+	Euler e2(0.0f, 90.0f, 0.0f);
+	Quaternion q2 = QMath::fromEuler(e2);
+	q2.print("End");
+
+	for (float t = 0.0f; t < 1.1f; t+=0.1f) {
+		Quaternion q = QMath::slerp(q1, q2, t);
+		q.print("slerping");
+	}
+
 }
 
 void determinantTest(){
@@ -154,9 +157,7 @@ void hashTest(){
 }
 
 void quaternionTest() {
-	
 	/// glm version 
-	
 	glm::quat myQuaternion = glm::angleAxis(glm::radians(90.f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glmPrintQ(myQuaternion, "glm Quat");
 

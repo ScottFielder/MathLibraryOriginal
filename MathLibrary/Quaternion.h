@@ -21,10 +21,6 @@ namespace  MATH {
 			set(1.0f, 0.0f, 0.0f, 0.0f);
 		}
 
-		inline Quaternion(float w_, float x_, float y_, float z_) {
-			set(w_, x_, y_, z_);
-		}
-
 		inline Quaternion(float w_, const Vec3& ijk_) {
 			set(w_, ijk_.x, ijk_.y, ijk_.z);
 		}
@@ -42,7 +38,7 @@ namespace  MATH {
 
 		/// Take the negative of a Quaternion
 		inline const Quaternion operator - () const {
-			return Quaternion(-w, -ijk.x, -ijk.y, -ijk.z);
+			return Quaternion(-w, Vec3(-ijk.x, -ijk.y, -ijk.z));
 		}
 
 		/// Multiply a two quaternions - using the right-hand rule 
@@ -73,19 +69,19 @@ namespace  MATH {
 		}
 
 		inline const Quaternion operator + (const Quaternion q) const {
-			return Quaternion(w + q.w, ijk.x + q.ijk.x, ijk.y + q.ijk.y, ijk.z + q.ijk.z);
+			return Quaternion(w + q.w, Vec3(ijk.x + q.ijk.x, ijk.y + q.ijk.y, ijk.z + q.ijk.z));
 		}
 
 		inline const Quaternion operator - (const Quaternion q) const {
-			return Quaternion(w - q.w, ijk.x - q.ijk.x, ijk.y - q.ijk.y, ijk.z - q.ijk.z);
+			return Quaternion(w - q.w, Vec3(ijk.x - q.ijk.x, ijk.y - q.ijk.y, ijk.z - q.ijk.z));
 		}
 
 		inline const Quaternion operator * (const float scalar) const {
-			return Quaternion(w * scalar, ijk.x * scalar, ijk.y * scalar, ijk.z * scalar);
+			return Quaternion(w * scalar, Vec3(ijk.x * scalar, ijk.y * scalar, ijk.z * scalar));
 		}
 
 		inline const Quaternion operator / (const float scalar) const {
-			return Quaternion(w / scalar, ijk.x / scalar, ijk.y / scalar, ijk.z / scalar);
+			return Quaternion(w / scalar, Vec3(ijk.x / scalar, ijk.y / scalar, ijk.z / scalar));
 		}
 
 		/// Now we can use the Quaternion like an array but we'll need two overloads
@@ -121,7 +117,7 @@ namespace  MATH {
 			return result.ijk;
 		}
 
-		/// Seriously, the tilde ~ in the complement operator not the 
+		/// Seriously, the tilde ~ is the complement operator not the 
 		///  conjugate - but it was for fun. 
 		inline Quaternion operator~() { return Quaternion(w, -ijk); }
 		/////////////////////////////////////////////////////////////////////////

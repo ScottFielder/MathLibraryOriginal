@@ -120,21 +120,29 @@ Quaternion QMath::slerp(const Quaternion& qa, const Quaternion& qb, float t) {
 
 	if (cosTheta < 0.0f) {		/// if cosTheta is negative, the angle is oblique. The shortest path 
 		q2 = -q2;				/// would be the other representation of the same angle -q2 
+		cosTheta = cosTheta;
 	}
+	float c1, c2;
+	///If cosTheta is very close to 1.0 just lerp it to prevent divide by zero
+	if (cosTheta > VERY_CLOSE_TO_ONE) {
+		c1 = 1.0f - t;
+		c2 = t;
+	} else {
+		float theta = acos(cosTheta);
+		float sinTheta = sin(theta); 
+		/// or sqrt(1.0 - cosTheta * cosTheta)
+		//float sinTheta = sqrt(1.0f - (cosTheta * cosTheta));
+		//float theta = atan2(sinTheta, cosTheta);
 
-	float theta = acos(cosTheta);
-	float sinTheta = sin(theta); /// or sqrt(1.0 - cosTheta * cosTheta)
-
-	float temp1 = ( sin((1.0f - t) * theta)) / sinTheta;
-	float temp2 = sin(t * theta) / sinTheta;
-	return Quaternion(	temp1 * q1.ijk.x + temp2 * q2.ijk.x,
-						temp1 * q1.ijk.y + temp2 * q2.ijk.y,
-						temp1 * q1.ijk.z + temp2 * q2.ijk.z,
-						temp1 * q1.w + temp2 * q2.w);
+		c1 = sin((1.0f - t) * theta) / sinTheta;
+		c2 = sin(t * theta) / sinTheta;
+	}
+	Vec3 ijk(c1 * q1.ijk.x + c2 * q2.ijk.x,
+			c1 * q1.ijk.y + c2 * q2.ijk.y,
+			c1 * q1.ijk.z + c2 * q2.ijk.z);
+	return Quaternion(c1 * q1.w + c2 * q2.w, ijk);
 		
 }
-
-
 
 
 

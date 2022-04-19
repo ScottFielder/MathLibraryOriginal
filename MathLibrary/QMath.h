@@ -15,7 +15,7 @@ namespace MATH{
 		static float magnitude(const Quaternion& q);
 		static Quaternion pow(const Quaternion& q, float exponent);
 
-		/// 2022-02-12 An Dr. Umer Noor edit. Putting in a normalize method
+		/// 2022-02-12 A  Dr. Umer Noor edit. Putting in a normalize method
 		static Quaternion normalize(const Quaternion& q);
 
 		
@@ -34,8 +34,10 @@ namespace MATH{
 
 		static Quaternion slerp(const Quaternion& q1, const Quaternion& q2, float t);
 
-		/// Not needed after C17
-		//static float clamp(float x, float minVal, float maxVal) { return std::min(std::max(x, minVal), maxVal); }
+		/// Not needed after C17 it is now std::clamp
+		///static float clamp(float x, float minVal, float maxVal) { 
+		///		return std::min(std::max(x, minVal), maxVal); 
+		///}
 	};
 }
 #endif
