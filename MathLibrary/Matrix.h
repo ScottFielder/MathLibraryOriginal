@@ -165,7 +165,7 @@ namespace  MATH {
 		/// These functions set and return the columns of a Matrix4
 		/// Since the library is right-handed, the colunms are refered to 
 		/// as basis vectors.  
-		enum Colunm { zero = 0, one, two, three };
+		enum  Colunm { zero = 0, one, two, three };
 		inline Vec4 getColumn(Colunm index) {
 			return Vec4(m[4 * index + 0], m[4 * index + 1], m[4 * index + 2], m[4 * index + 3]);
 		}
@@ -176,13 +176,6 @@ namespace  MATH {
 			m[4 * index + 2] = v[2];
 			m[4 * index + 3] = v[3];
 		}
-
-		/***  I'm not sure what this would be good for in a right-handed construct
-		enum class Row { zero = 0, one, two, three };
-		inline Vec4 getRow(Row index) {
-			return Vec4(m[0 + index], m[4 + index], m[8 + index], m[12 + index]);
-		}
-		***/
 
 	};
 
