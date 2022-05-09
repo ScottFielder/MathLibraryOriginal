@@ -5,8 +5,8 @@
 namespace MATH {
 	class AAMath {
 	public:
-		static AxisAngle RotationMatrixToAxisAngle(const Matrix4& pureRotationMatrix);
-		static AxisAngle RotationMatrixToAxisAngle(const Matrix3& pureRotationMatrix);
+		static AxisAngle toAxisAngle(const Matrix4& pureRotationMatrix);
+		static AxisAngle toAxisAngle(const Matrix3& pureRotationMatrix);
 	};
 }
 #endif

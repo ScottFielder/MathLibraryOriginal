@@ -3,14 +3,15 @@
 #include "Matrix.h"
 #include "Plane.h"
 #include "AxisAngle.h"
-
+#include "Euler.h"
+#include "Quaternion.h"
 namespace  MATH {
 
 	class MMath {
 	public:
 		static Matrix4 rotate(const float degrees_, const float x_, const float y_, const float z_);
 		static Matrix4 rotate(const float degrees_, const Vec3 &axis_);
-		static Matrix4 rotate(const AxisAngle &axisAngle_);
+		
 
 		static Matrix4 translate(const float x_, const float y_ , const float z_);
 		static Matrix4 translate(const Vec3 &translate_);
@@ -39,6 +40,11 @@ namespace  MATH {
 
 		static Matrix3 inverse(const Matrix3& m) ;
 		static Matrix4 inverse(const Matrix4 &m);
+
+		static Matrix3 toMatrix3(const Euler& e);
+		static Matrix3 toMatrix3(const Quaternion& q);
+		static Matrix4 toMatrix4(const Quaternion& q);
+		static Matrix4 toMatrix4(const AxisAngle &axisAngle_);
 	};
 
 }

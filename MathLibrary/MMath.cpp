@@ -1,5 +1,6 @@
 #include "VMath.h"
 #include "MMath.h"
+#include "AxisAngle.h"
 
 using namespace MATH;
 
@@ -40,9 +41,6 @@ Matrix4 MMath::rotate(const float degrees_, const Vec3 &axis_) {
 	return MMath::rotate(degrees_, axis_.x, axis_.y, axis_.z);
 }
 
-Matrix4 MMath::rotate(const AxisAngle& axisAngle_){
-	return MMath::rotate(axisAngle_.angle,axisAngle_.axis.x, axisAngle_.axis.y, axisAngle_.axis.z);
-}
 
 
 
@@ -317,3 +315,50 @@ Matrix4 MMath::inverse(const Matrix4 &m) {
 		}
 		return inverseM;
 }
+
+/// Convert Eular angles to a 3x3 rotation matrix
+Matrix3 MMath::toMatrix3(const Euler& e) {
+	/// Note: If you want to multiply xaxis, yaxis,zaix in that order. I think
+	/// it should be m = x * z * y <- reading right to left. .
+	Matrix3 m = Matrix3(MMath::rotate(e.xAxis, Vec3(1.0f, 0.0f, 0.0f)) *
+						MMath::rotate(e.zAxis, Vec3(0.0f, 0.0f, 1.0f)) *
+						MMath::rotate(e.yAxis, Vec3(0.0f, 1.0f, 0.0f)));
+	return m;
+}
+
+Matrix4 MMath::toMatrix4(const AxisAngle& axisAngle_){
+	return MMath::rotate(axisAngle_.angle,axisAngle_.axis.x, axisAngle_.axis.y, axisAngle_.axis.z);
+}
+
+Matrix3 MMath::toMatrix3(const Quaternion& q) {
+	/// This is the fastest way I know...
+	return Matrix3((1.0f - 2.0f * q.ijk.y * q.ijk.y - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.x * q.ijk.y + 2.0f * q.ijk.z * q.w), (2.0f * q.ijk.x * q.ijk.z - 2.0f * q.ijk.y * q.w),
+		(2.0f * q.ijk.x * q.ijk.y - 2.0f * q.ijk.z * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.y * q.ijk.z + 2.0f * q.ijk.x * q.w),
+		(2.0f * q.ijk.x * q.ijk.z + 2.0f * q.ijk.y * q.w), (2.0f * q.ijk.y * q.ijk.z - 2 * q.ijk.x * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.y * q.ijk.y));
+}
+
+
+Matrix4 MMath::toMatrix4(const Quaternion& q) {
+	/// This is the fastest way I know...
+	return Matrix4((1.0f - 2.0f * q.ijk.y * q.ijk.y - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.x * q.ijk.y + 2.0f * q.ijk.z * q.w), (2.0f * q.ijk.x * q.ijk.z - 2.0f * q.ijk.y * q.w), 0.0f,
+		(2.0f * q.ijk.x * q.ijk.y - 2.0f * q.ijk.z * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.y * q.ijk.z + 2.0f * q.ijk.x * q.w), 0.0f,
+		(2.0f * q.ijk.x * q.ijk.z + 2.0f * q.ijk.y * q.w), (2.0f * q.ijk.y * q.ijk.z - 2 * q.ijk.x * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.y * q.ijk.y), 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f);
+
+	/// ... but this is the coolest. My way is just a bit faster on single processor machines,
+	/// this method is faster on parallel multicore machines. Multicore can calc m1 and m2
+	/// on separate threads. Just saying. 
+
+	//Matrix4 m1( q.w,  q.ijk.z,  -q.ijk.y,  q.ijk.x,
+	//		-q.ijk.z,   q.w,   q.ijk.x,  q.ijk.y,
+	//		q.ijk.y,  -q.ijk.x,   q.w,  q.ijk.z,
+	//		-q.ijk.x,  -q.ijk.y,  -q.ijk.z,  q.w);
+	//
+	//Matrix4 m2( q.w,   q.ijk.z,  -q.ijk.y,  -q.ijk.x,
+	//			-q.ijk.z,   q.w,   q.ijk.x,  -q.ijk.y,
+	//			q.ijk.y,  -q.ijk.x,   q.w,  -q.ijk.z,
+	//			-q.ijk.x,   q.ijk.y,   q.ijk.z,   q.w);
+	//return m1 * m2;
+
+}
+

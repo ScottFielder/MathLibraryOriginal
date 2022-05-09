@@ -16,6 +16,11 @@ namespace  MATH {
 			w = w_; ijk.x = x_; ijk.y = y_; ijk.z = z_;
 		}
 
+		/// Another little utility to populate a quaternion
+		inline void set(float w_, Vec3 ijk_) {
+			w = w_; ijk.x = ijk_.x; ijk.y = ijk_.y; ijk.z = ijk_.z;
+		}
+
 		/// This is the unit quaterion by definition 
 		inline Quaternion() {
 			set(1.0f, 0.0f, 0.0f, 0.0f);
@@ -95,7 +100,7 @@ namespace  MATH {
 
 		inline void print(const char* comment = nullptr) {
 			if (comment) printf("%s\n", comment);
-			printf("%1.8f %1.8f %1.8f %1.8f\n", w, ijk.x, ijk.y, ijk.z);
+			printf("%1.4f %1.4f %1.4f %1.4f\n", w, ijk.x, ijk.y, ijk.z);
 		}
 
 

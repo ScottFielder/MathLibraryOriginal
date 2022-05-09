@@ -170,7 +170,7 @@ namespace  MATH {
 			return Vec4(m[4 * index + 0], m[4 * index + 1], m[4 * index + 2], m[4 * index + 3]);
 		}
 
-		inline void setColunm(Colunm index, const Vec4 v) {
+		inline void setColumn(Colunm index, const Vec4 v) {
 			m[4 * index + 0] = v[0];
 			m[4 * index + 1] = v[1];
 			m[4 * index + 2] = v[2];
@@ -296,12 +296,12 @@ namespace  MATH {
 		/// These functions set and return the columns of a Matrix3
 		/// Since the library is right-handed, the colunms are refered to 
 		/// as basis vectors.  
-		enum class Colunm : int { zero = 0, one, two };
-		inline Vec3 getColumn(Colunm index) {
+		enum class Column : int { zero = 0, one, two };
+		inline Vec3 getColumn(Column index) {
 			return Vec3(m[3 * (int)index + 0], m[3 * (int)index + 1], m[3 * (int)index + 2]);
 		}
 
-		inline void setColunm(Colunm index, const Vec3 v) {
+		inline void setColumn(Column index, const Vec3 v) {
 			m[3 * (int)index + 0] = v[0];
 			m[3 * (int)index + 1] = v[1];
 			m[3 * (int)index + 2] = v[2];
@@ -310,7 +310,7 @@ namespace  MATH {
 		/// Print the Matrix3 in column form (right-hand rule), add a comment if you wish
 		inline void print(const char* comment = nullptr) {
 			if (comment) printf("%s\n", comment);
-			printf("%1.8f %1.8f %1.8f\n%1.8f %1.8f %1.8f\n%1.8f %1.8f %1.8f\n\n",
+			printf("%1.4f %1.4f %1.4f\n%1.4f %1.4f %1.4f\n%1.4f %1.4f %1.4f\n\n",
 				m[0], m[3], m[6],
 				m[1], m[4], m[7],
 				m[2], m[5], m[8]);

@@ -22,6 +22,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/quaternion.hpp>
+
 #include <glm/gtx/hash.hpp>
 
 
@@ -43,6 +44,8 @@ void slerpTest();
 
 /// Utility print() calls for glm to Scott's math library format 
 void glmPrintM4(glm::mat4  mat, const char* comment = nullptr);
+void glmPrintM3(glm::mat3  mat, const char* comment = nullptr);
+
 void glmPrintQ(glm::quat q, const char* comment = nullptr);
 void glmPrintV3(glm::vec3 v, const char* comment = nullptr);
 void glmPrintV4(glm::vec4 v, const char* comment = nullptr);
@@ -54,7 +57,6 @@ using namespace std;
 
 
 int main(int argc, char*argv[]) {
-	//slerpTest();
 	quaternionTest();
 
 	
@@ -63,11 +65,11 @@ int main(int argc, char*argv[]) {
 
 void slerpTest() {
 	Euler e1(90.0f, 0.0f, 0.0f);
-	Quaternion q1 = QMath::fromEuler(e1);
+	Quaternion q1 = QMath::toQuaternion(e1);
 	q1.print("Start");
 
 	Euler e2(0.0f, 90.0f, 0.0f);
-	Quaternion q2 = QMath::fromEuler(e2);
+	Quaternion q2 = QMath::toQuaternion(e2);
 	q2.print("End");
 
 	for (float t = 0.0f; t < 1.1f; t+=0.1f) {
@@ -81,10 +83,10 @@ void determinantTest(){
 	/// These vectors should return a value of 30 - it does.
 	/// Swap any two and the sign should change - it does
 	Matrix4 m4;
-	m4.setColunm(Matrix4::Colunm::zero,Vec4(1,0,2,-1));
-	m4.setColunm(Matrix4::Colunm::one, Vec4(3, 0, 0, 5));
-	m4.setColunm(Matrix4::Colunm::two, Vec4(2, 1, 4, -3));
-	m4.setColunm(Matrix4::Colunm::three,Vec4(1, 0, 5, 0));
+	m4.setColumn(Matrix4::Colunm::zero,Vec4(1, 0, 2, -1));
+	m4.setColumn(Matrix4::Colunm::one, Vec4(3, 0, 0, 5));
+	m4.setColumn(Matrix4::Colunm::two, Vec4(2, 1, 4, -3));
+	m4.setColumn(Matrix4::Colunm::three,Vec4(1, 0, 5, 0));
 	
 	printf("%f\n",MMath::determinate(m4));
 
@@ -150,34 +152,51 @@ void hashTest(){
 		++glmCount;
 	}
 	printf("%d\n", glmUniqueVerts.size());
-
-
-	
-
 }
 
 void quaternionTest() {
-	/// glm version 
-	glm::quat myQuaternion = glm::angleAxis(glm::radians(90.f), glm::vec3(0.0f, 0.0f, 1.0f));
+	Quaternion qLookat = QMath::lookAt(Vec3(100.0f, 0.0f, 1.0f));
+	qLookat.print();
+	
+	glm::quat glmlookat = glm::quatLookAt(normalize(vec3(100.0f, 0.0f, 1.0)), vec3(0.0f, 1.0f, 0.0));
+	glmPrintQ(glmlookat,"glm lookat");
+
+
+	Matrix3 rm = Matrix3 (MMath::rotate(-270.0f, Vec3(1.0f, 0.0f, 0.0f)));
+	rm.print("My rotation matrix");
+	Quaternion qm = QMath::toQuaternion(rm);
+	qm.print("Quaternion rotate");
+	Matrix4 meMat = MMath::toMatrix4(qm);
+	meMat.print("My matrix from Q");
+
+	mat3 glmrot = mat3(rotate(glm::radians(-270.0f), vec3(1.0f,0.0f,0.0f)));
+	glmPrintM4(glmrot, "GLM rot");
+	glm::quat glmqm= glm::quat_cast(glmrot);
+	glmPrintQ(glmqm,"glm matrix from Q");
+
+	glm::mat4 glmRot = glm::toMat4(glmqm);
+	glmPrintM4(glmRot,"glm rotation Matrix from Q");
+	
+
+	Quaternion q3 = QMath::angleAxisRotation(-90.0,Vec3(1.0f,0.0f,0.0f));
+	q3.print("my Quat");
+	glm::quat myQuaternion = glm::angleAxis(glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	glmPrintQ(myQuaternion, "glm Quat");
 
-	/// my version 
-	Quaternion q3 = QMath::angleAxisRotation(90.0,Vec3(0.0f,0.0f,1.0f));
-	q3.print("my Quat");
 
-	glm::mat4 glmRot = glm::toMat4(myQuaternion);
-	glmPrintM4(glmRot,"glm rotation Matrix");
+	
+
+	
 	
 
 
-	Matrix4 meMat = QMath::toMatrix4(q3);
-	meMat.print("My matrix");
+	
 
 
-	/// Lets say I have a unit vector along the x-axis 1,0,0. 
-	/// Rotate 45.0 degree around the z-axis
-	/// The resulting vector should be 0.70711, 0.70711, 0.0 
-	/// Let's test this in every way I can think of
+	/*/// Lets say I have a unit vector along the x-axis 1,0,0. 
+	 Rotate 45.0 degree around the z-axis
+	 The resulting vector should be 0.70711, 0.70711, 0.0 
+	 Let's test this in every way I can think of
 	Vec3 v(1.0, 0.0, 0.0);
 	Quaternion q = QMath::angleAxisRotation(90.0,Vec3(0.0,1.0,0.0));
 	Euler e2 = QMath::fromQuaternion(q);
@@ -218,7 +237,7 @@ void quaternionTest() {
 	inv_q.print("inv of q");
 
 	Quaternion q4 = q * inv_q;
-	q4.print("q * q-1 is the identity");
+	q4.print("q * q-1 is the identity");*/
 
 }
 
@@ -487,11 +506,21 @@ void FFT_Test(){
 /// These are print statements for glm - they don't have them  
 ///////////////////////////////////////////////////////////////////////////////////////////////
 void glmPrintM4(glm::mat4  mat, const char* comment){
-	
 	int i, j;
+	if (comment) printf("%s\n", comment);
 	for (j = 0; j<4; j++) {
 		for (i = 0; i<4; i++) {
-			printf("%1.8f ", mat[i][j]);
+			printf("%1.4f ", mat[i][j]);
+		}
+		printf("\n");
+	}
+}
+void glmPrintM3(glm::mat3  mat, const char* comment){
+	int i, j;
+	if (comment) printf("%s\n", comment);
+	for (j = 0; j<3; j++) {
+		for (i = 0; i<3; i++) {
+			printf("%1.4f ", mat[i][j]);
 		}
 		printf("\n");
 	}
@@ -500,15 +529,15 @@ void glmPrintM4(glm::mat4  mat, const char* comment){
 void glmPrintQ(glm::quat q, const char* comment) {
 	if (comment) printf("%s\n", comment);
 	///                                    w     i     j     k
-	printf("%1.8f %1.8f %1.8f %1.8f \n", q[3], q[0], q[1], q[2]);
+	printf("%1.4f %1.4f %1.4f %1.4f \n", q[3], q[0], q[1], q[2]);
 }
 
 void glmPrintV3(glm::vec3 v, const char* comment) {
 	if (comment) printf("%s\n", comment);
-	printf("%1.8f %1.8f %1.8f\n", v[0], v[1], v[2]);
+	printf("%1.4f %1.4f %1.4f\n", v[0], v[1], v[2]);
 }
 
 void glmPrintV4(glm::vec4 v, const char* comment) {
 	if (comment) printf("%s\n", comment);
-	printf("%1.8f %1.8f %1.8f %1.8f\n", v[0], v[1], v[2], v[3]);
+	printf("%1.4f %1.4f %1.4f %1.4f\n", v[0], v[1], v[2], v[3]);
 }

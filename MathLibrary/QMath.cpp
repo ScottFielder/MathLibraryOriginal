@@ -30,18 +30,49 @@ Quaternion QMath::pow(const Quaternion& q, float exponent) {
 
 
 Quaternion QMath::normalize(const Quaternion& q){
-return q / magnitude(q);
+	return q / magnitude(q);
 }
 
-Euler QMath::fromQuaternion(const Quaternion& q) {
-	Euler result;
-	result.roll = atan2(2.0f * (q.ijk.x * q.ijk.y + q.w * q.ijk.z), q.w * q.w + q.ijk.x * q.ijk.x - q.ijk.y * q.ijk.y - q.ijk.z * q.ijk.z);
-	result.pitch = atan2(2.0f * (q.ijk.y * q.ijk.z + q.w * q.ijk.x), q.w * q.w - q.ijk.x * q.ijk.x - q.ijk.y * q.ijk.y + q.ijk.z * q.ijk.z);
-	result.yaw = asin(std::clamp(-2.0f * (q.ijk.x * q.ijk.z - q.w * q.ijk.y), -1.0f, 1.0f));
-	return result * RADIANS_TO_DEGREES;
+Quaternion QMath::lookAt(const Vec3& direction, const Vec3& up) {
+	Matrix3 result;
+	Vec3 dir = VMath::normalize(direction);
+	result.setColumn(Matrix3::Column::two, -dir);
+	result.setColumn(Matrix3::Column::zero, VMath::normalize(VMath::cross(up, -dir)));
+	result.setColumn(Matrix3::Column::one, VMath::cross(-dir, result.getColumn(Matrix3::Column::zero)));
+	return toQuaternion(result);
 }
 
-Quaternion QMath::fromEuler(const Euler& e) {
+Quaternion QMath::toQuaternion(const Matrix3& m) {
+	float trace;
+	Quaternion qResult;
+	if (m[8] < 0.0f) {
+		if (m[0] > m[4]) {
+			trace = 1.0f + m[0] - m[4] - m[8];
+			Vec3 ijk(trace, m[1] + m[3], m[6] + m[2]);
+			qResult.set(m[5] - m[7], ijk);
+		} else {
+			trace = 1.0f - m[0] + m[4] - m[8];
+			Vec3 ijk(m[1] + m[3], trace, m[5] + m[7]);
+			qResult.set( m[6] - m[2], ijk);
+		}
+	} else {
+		if (m[0] < -m[4]) {
+			trace = 1.0f - m[0] - m[4] + m[8];
+			Vec3 ijk(m[6] + m[2], m[5] + m[7], trace);
+			qResult.set(m[1] - m[3], ijk);
+		} else {
+			trace = 1.0f + m[0] + m[4] + m[8];
+			Vec3 ijk(m[5] - m[7], m[6] - m[2], m[1] - m[3]);
+			qResult.set(trace, ijk);
+		}
+	}
+	qResult = qResult * (0.5f / sqrt(trace));
+	return qResult;
+}
+
+
+
+Quaternion QMath::toQuaternion(const Euler& e) {
 	float cosX = cos(0.5f * e.xAxis * DEGREES_TO_RADIANS);
 	float cosY = cos(0.5f * e.yAxis * DEGREES_TO_RADIANS);
 	float cosZ = cos(0.5f * e.zAxis * DEGREES_TO_RADIANS);
@@ -56,36 +87,7 @@ Quaternion QMath::fromEuler(const Euler& e) {
 			(cosX * cosY * sinZ) - (sinX * sinY * cosZ)));
 }
 
-Matrix3 QMath::toMatrix3(const Quaternion& q) {
-	/// This is the fastest way I know...
-	return Matrix3((1.0f - 2.0f * q.ijk.y * q.ijk.y - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.x * q.ijk.y + 2.0f * q.ijk.z * q.w), (2.0f * q.ijk.x * q.ijk.z - 2.0f * q.ijk.y * q.w),
-		(2.0f * q.ijk.x * q.ijk.y - 2.0f * q.ijk.z * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.y * q.ijk.z + 2.0f * q.ijk.x * q.w),
-		(2.0f * q.ijk.x * q.ijk.z + 2.0f * q.ijk.y * q.w), (2.0f * q.ijk.y * q.ijk.z - 2 * q.ijk.x * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.y * q.ijk.y));
-}
 
-Matrix4 QMath::toMatrix4(const Quaternion& q) {
-	/// This is the fastest way I know...
-	return Matrix4((1.0f - 2.0f * q.ijk.y * q.ijk.y - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.x * q.ijk.y + 2.0f * q.ijk.z * q.w), (2.0f * q.ijk.x * q.ijk.z - 2.0f * q.ijk.y * q.w), 0.0f,
-		(2.0f * q.ijk.x * q.ijk.y - 2.0f * q.ijk.z * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.z * q.ijk.z), (2.0f * q.ijk.y * q.ijk.z + 2.0f * q.ijk.x * q.w), 0.0f,
-		(2.0f * q.ijk.x * q.ijk.z + 2.0f * q.ijk.y * q.w), (2.0f * q.ijk.y * q.ijk.z - 2 * q.ijk.x * q.w), (1.0f - 2.0f * q.ijk.x * q.ijk.x - 2.0f * q.ijk.y * q.ijk.y), 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f);
-
-	/// ... but this is the coolest. My way is just a bit faster on single processor machines,
-	/// this method is faster on parallel multicore machines. Multicore can calc m1 and m2
-	/// on separate threads. Just saying. 
-
-	//Matrix4 m1( q.w,  q.ijk.z,  -q.ijk.y,  q.ijk.x,
-	//		-q.ijk.z,   q.w,   q.ijk.x,  q.ijk.y,
-	//		q.ijk.y,  -q.ijk.x,   q.w,  q.ijk.z,
-	//		-q.ijk.x,  -q.ijk.y,  -q.ijk.z,  q.w);
-	//
-	//Matrix4 m2( q.w,   q.ijk.z,  -q.ijk.y,  -q.ijk.x,
-	//			-q.ijk.z,   q.w,   q.ijk.x,  -q.ijk.y,
-	//			q.ijk.y,  -q.ijk.x,   q.w,  -q.ijk.z,
-	//			-q.ijk.x,   q.ijk.y,   q.ijk.z,   q.w);
-	//return m1 * m2;
-
-}
 Quaternion QMath::angleAxisRotation(const float degrees, const Vec3& axis) {
 	Vec3 rotationAxis = VMath::normalize(axis);
 	float theta = degrees * DEGREES_TO_RADIANS;
@@ -130,9 +132,8 @@ Quaternion QMath::slerp(const Quaternion& qa, const Quaternion& qb, float t) {
 	} else {
 		float theta = acos(cosTheta);
 		float sinTheta = sin(theta); 
-		/// or sqrt(1.0 - cosTheta * cosTheta)
-		//float sinTheta = sqrt(1.0f - (cosTheta * cosTheta));
-		//float theta = atan2(sinTheta, cosTheta);
+		////or float sinTheta = sqrt(1.0f - (cosTheta * cosTheta));
+		///float theta = atan2(sinTheta, cosTheta);
 
 		c1 = sin((1.0f - t) * theta) / sinTheta;
 		c2 = sin(t * theta) / sinTheta;
