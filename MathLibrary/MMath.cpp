@@ -4,7 +4,6 @@
 
 using namespace MATH;
 
-
 ///Tested Feb 2 2013 SSF
 
  Matrix4 MMath::rotate(float degrees_, float x_, float y_, float z_){
@@ -41,9 +40,6 @@ Matrix4 MMath::rotate(const float degrees_, const Vec3 &axis_) {
 	return MMath::rotate(degrees_, axis_.x, axis_.y, axis_.z);
 }
 
-
-
-
  
 Matrix4 MMath::perspective(const float fovy_, const float aspect_, const float zNear_, const float zFar_){
 	float cot = 1.0f / tan(fovy_* 0.5f * DEGREES_TO_RADIANS);
@@ -54,7 +50,6 @@ Matrix4 MMath::perspective(const float fovy_, const float aspect_, const float z
 			      0.0f,        0.0f,    (2.0f*zNear_*zFar_)/(zNear_-zFar_),   0.0f);
 	return result;
 }
-
 
 
 
@@ -97,7 +92,7 @@ Matrix4 MMath:: viewportNDC(int width_,int height_){
 	Matrix4 m3 = translate(float(width_)/2.0f,float(height_)/2.0f, minZ);
 	m = m3 * m2 * m1;
 
-	///This is the slightly faster way but who cares we do it rarely 
+	///This might be slightly faster way but who cares we do it rarely 
 	/***
 	m[0] = float(width_)/2.0f;
 	m[5] = -float(height_)/2.0f; 
@@ -110,11 +105,9 @@ Matrix4 MMath:: viewportNDC(int width_,int height_){
 	return m;
 }
 
-
-/// 
+ 
 Matrix4 MMath::orthographic(float xMin_, float xMax_, float yMin_, float yMax_, float zMin_, float zMax_){
 	Matrix4 m;
-	
 	Matrix4 m1 = MMath::scale(2.0f / (xMax_ - xMin_), 2.0f / (yMax_ - yMin_),-2.0f / (zMax_ - zMin_));
 	Matrix4 m2 = MMath::translate( -(xMax_ + xMin_) / (xMax_ - xMin_), -(yMax_ + yMin_) / (yMax_ - yMin_), -(zMax_ + zMin_) / (zMax_ - zMin_)); 
 	m = m2 * m1;

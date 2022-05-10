@@ -31,7 +31,7 @@ Euler EMath::toEular(const Quaternion& q) {
 		e.zAxis *= RADIANS_TO_DEGREES;
 		return e;
 	}
-#undef RADIANS2DEGREES
+
 
 
 

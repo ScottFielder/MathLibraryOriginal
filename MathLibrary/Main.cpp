@@ -155,10 +155,10 @@ void hashTest(){
 }
 
 void quaternionTest() {
-	Quaternion qLookat = QMath::lookAt(Vec3(100.0f, 0.0f, 1.0f));
+	Quaternion qLookat = QMath::lookAt(Vec3(1.0f, 0.0f, 1.0f),Vec3(0.0f, 1.0f, 0.0));
 	qLookat.print();
 	
-	glm::quat glmlookat = glm::quatLookAt(normalize(vec3(100.0f, 0.0f, 1.0)), vec3(0.0f, 1.0f, 0.0));
+	glm::quat glmlookat = glm::quatLookAt(normalize(vec3(1.0f, 0.0f, 1.0)), vec3(0.0f, 1.0f, 0.0));
 	glmPrintQ(glmlookat,"glm lookat");
 
 
@@ -185,27 +185,19 @@ void quaternionTest() {
 
 
 	
-
-	
-	
-
-
-	
-
-
-	/*/// Lets say I have a unit vector along the x-axis 1,0,0. 
-	 Rotate 45.0 degree around the z-axis
+	/// Lets say I have a unit vector along the x-axis 1,0,0. 
+	 /*Rotate 45.0 degree around the z-axis
 	 The resulting vector should be 0.70711, 0.70711, 0.0 
-	 Let's test this in every way I can think of
+	 Let's test this in every way I can think of*/
 	Vec3 v(1.0, 0.0, 0.0);
 	Quaternion q = QMath::angleAxisRotation(90.0,Vec3(0.0,1.0,0.0));
-	Euler e2 = QMath::fromQuaternion(q);
+	Euler e2 = EMath::toEular(q);
 	e2.print("from Q");
 	
 	q.print("The rotation Quaternion");
 	Euler e(0.0, 0.0, 45.0);
 
-	Quaternion qe = QMath::fromEuler(e);
+	Quaternion qe = QMath::toQuaternion(e);
 	
 	qe.print("from Euler");
 	Vec3 v2 = qe * v * ~qe;
@@ -216,11 +208,11 @@ void quaternionTest() {
 	Vec3 v3 = QMath::rotate(v, qe);
 	v3.print("faster way");
 
-	Matrix3 m3 = QMath::toMatrix3(qe);
+	Matrix3 m3 = MMath::toMatrix3(qe);
 	Vec3 v4 = m3 * v;
 	v4.print("Mat3");
 
-	Matrix4 m4 = QMath::toMatrix4(qe);
+	Matrix4 m4 = MMath::toMatrix4(qe);
 	Vec3 v5 = m4 * v;
 	v5.print("Mat4");
 
@@ -237,7 +229,7 @@ void quaternionTest() {
 	inv_q.print("inv of q");
 
 	Quaternion q4 = q * inv_q;
-	q4.print("q * q-1 is the identity");*/
+	q4.print("q * q-1 is the identity");
 
 }
 
@@ -295,7 +287,7 @@ void rotationIsOrthogonal() {
 	printf("%f\n", VMath::dot(v3, v1));
 	printf("%f\n", VMath::dot(v3, v2));
 	printf("%f\n", VMath::dot(v3, v3));
-	printf("If all the values are zero, the matrix is orthoganal\n");
+	printf("If all the values are zero, the matrix is orthogonal\n");
 }
 void randomizerTest() {
 	Randomizer r;

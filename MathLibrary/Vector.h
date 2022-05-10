@@ -2,7 +2,7 @@
 #define VECTOR_H
 #include <iostream>
 #include <string> /// Used for passing exceptions 
-#include <cmath>
+
 		///
 		/// Vec3 definitions followed by Vec4 
 		/// There are notes at the bottom of this file you might want to read

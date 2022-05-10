@@ -1,6 +1,5 @@
 #ifndef QMATH_H
 #define QMATH_H
-#include <cmath>
 #include "Quaternion.h"
 #include "Matrix.h"
 #include "Euler.h"
@@ -33,7 +32,8 @@ namespace MATH{
 
 		static Quaternion slerp(const Quaternion& q1, const Quaternion& q2, float t);
 
-		/// Not needed after C17 it is now std::clamp
+		/// Not needed after C17 it is now std::clamp <algorithm>
+
 		///static float clamp(float x, float minVal, float maxVal) { 
 		///		return std::min(std::max(x, minVal), maxVal); 
 		///}
