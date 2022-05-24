@@ -63,7 +63,7 @@ namespace  MATH {
 		}
 		
 		/// print the values of the plane and add a comment if you wish
-		void print(const char* comment = nullptr) {
+		void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%f %f %f %f\n", x, y, z, d);
 		}

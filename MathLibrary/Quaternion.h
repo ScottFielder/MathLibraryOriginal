@@ -98,7 +98,7 @@ namespace  MATH {
 			return *((float*)this + index);
 		}
 
-		inline void print(const char* comment = nullptr) {
+		inline void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.4f %1.4f %1.4f %1.4f\n", w, ijk.x, ijk.y, ijk.z);
 		}

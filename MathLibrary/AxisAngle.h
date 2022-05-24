@@ -7,7 +7,7 @@ namespace MATH{
 		float angle;
 		Vec3 axis;
 
-		inline void print(const char* comment = nullptr) {
+		inline void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.8f (%1.8f %1.8f %1.8f)\n",angle, axis.x, axis.y, axis.z);
 		}

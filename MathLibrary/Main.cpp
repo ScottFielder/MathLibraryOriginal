@@ -57,8 +57,14 @@ using namespace std;
 
 
 int main(int argc, char*argv[]) {
-	quaternionTest();
+	Matrix4 look = MMath::lookAt(Vec3(0.0, 0.0, 10.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
+	look.print();
+	Matrix4 trans = MMath::translate(Vec3(0.0, 0.0, -10.0));
+	Quaternion qLookat = QMath::lookAt(Vec3(0.0f, 0.0f, -10.0f),Vec3(0.0f, 1.0f, 0.0));
+	Matrix4 qLook= trans * MMath::toMatrix4(qLookat);
+	qLook.print();
 
+	
 	
 }
 

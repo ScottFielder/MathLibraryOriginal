@@ -57,7 +57,7 @@ namespace MATH {
 			return *this;
 		}
 
-		inline void print (const char* comment = nullptr) {
+		inline void print (const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.8f %1.8f %1.8f\n", xAxis, yAxis, zAxis);
 		}

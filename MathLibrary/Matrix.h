@@ -153,7 +153,7 @@ namespace  MATH {
 		inline operator const float* () const { return static_cast<const float*>(&m[0]); }
 
 		/// Print the Matrix4 in column form (right-hand rule), add a comment if you wish 
-		inline void print(const char* comment = nullptr) {
+		inline void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.4f %1.4f %1.4f %1.4f\n%1.4f %1.4f %1.4f %1.4f \n%1.4f %1.4f %1.4f %1.4f \n%1.4f %1.4f %1.4f %1.4f \n\n",
 				m[0], m[4], m[8], m[12],
@@ -301,7 +301,7 @@ namespace  MATH {
 		}
 
 		/// Print the Matrix3 in column form (right-hand rule), add a comment if you wish
-		inline void print(const char* comment = nullptr) {
+		inline void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.4f %1.4f %1.4f\n%1.4f %1.4f %1.4f\n%1.4f %1.4f %1.4f\n\n",
 				m[0], m[3], m[6],

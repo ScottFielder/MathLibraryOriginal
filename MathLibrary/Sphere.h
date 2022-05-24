@@ -24,7 +24,7 @@ namespace  MATH {
 		}
 
 		/// print the values of the sphere and add a comment if you wish
-		void print(const char* comment = nullptr) {
+		void print(const char* comment = nullptr) const {
 			if (comment) printf("%s\n", comment);
 			printf("%1.4f %1.4f %1.4f %1.4f\n", x, y, z, r);
 		}
