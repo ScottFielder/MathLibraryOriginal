@@ -20,7 +20,7 @@ namespace MATH {
 	/// 
 	/// Tricky bit is, std::map and std::unordered_map need the == operator to be overloaded
 	/// but notice it needs to be a two arg function; therefore, it cannot be part of the Vec2, 
-	/// Vec3 or Vec4 classes it needs to live outside the struct but within the namespace. 
+	/// Vec3 or the Vec4 classes it needs to live outside the struct but within the namespace. 
 	inline constexpr bool operator == (Vec2 const& v1, Vec2 const& v2) {
 		return (v1.x == v2.x) && (v1.y == v2.y);
 	}

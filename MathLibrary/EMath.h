@@ -9,7 +9,7 @@ namespace MATH {
 	class EMath {
 	public:
 		static Euler toEuler(const Matrix3 &m);
-		static Euler toEular(const Quaternion& q);
+		static Euler toEuler(const Quaternion& q);
 	};
 }
 #endif

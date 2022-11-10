@@ -2,18 +2,16 @@
 #include "VMath.h"
 using namespace MATH;
 
-
+/// Creates the Hessian normal form of the plane 
 Plane PMath::normalize(const Plane &p) {
 	float mag = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
-	return Plane(p.x / mag, p.y / mag, p.z / mag, 
-		p.d / mag);
+	return Plane(p.x / mag, p.y / mag, p.z / mag, p.d / mag);
 }
 
-
+/// Assuming the Hessian normal form of the plane 
 float PMath::distance(const Vec3 &v, const Plane &p) {
-	Vec3 n = p;
-	float mag = VMath::mag(n);
-	return (p.x*v.x + p.y*v.y + p.z*v.z + p.d) / mag;
+	Vec3 n(p.x, p.y, p.z); /// Copy the normal out of the plane
+	return VMath::dot(n, v) + p.d;
 }
 
 

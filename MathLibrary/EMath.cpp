@@ -6,7 +6,7 @@ using namespace MATH;
 
 
 
-Euler EMath::toEular(const Quaternion& q) {
+Euler EMath::toEuler(const Quaternion& q) {
 	Euler result;
 	result.roll = atan2(2.0f * (q.ijk.x * q.ijk.y + q.w * q.ijk.z), q.w * q.w + q.ijk.x * q.ijk.x - q.ijk.y * q.ijk.y - q.ijk.z * q.ijk.z);
 	result.pitch = atan2(2.0f * (q.ijk.y * q.ijk.z + q.w * q.ijk.x), q.w * q.w - q.ijk.x * q.ijk.x - q.ijk.y * q.ijk.y + q.ijk.z * q.ijk.z);

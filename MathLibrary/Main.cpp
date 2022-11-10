@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <algorithm> 
+
 #include "MMath.h"
 #include "QMath.h"
 #include "EMath.h"
@@ -56,16 +58,12 @@ using namespace glm;
 using namespace std;
 
 
-int main(int argc, char*argv[]) {
-	/*Matrix4 look = MMath::lookAt(Vec3(0.0, 0.0, 10.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
-	look.print();
-	Matrix4 trans = MMath::translate(Vec3(0.0, 0.0, -10.0));
-	Quaternion qLookat = QMath::lookAt(Vec3(0.0f, 0.0f, -10.0f),Vec3(0.0f, 1.0f, 0.0));
-	Matrix4 qLook= trans * MMath::toMatrix4(qLookat);
-	qLook.print();*/
 
-	determinantTest();
-	
+
+int main(int argc, char* argv[]) {
+	planeTest();
+
+
 }
 
 
@@ -201,7 +199,7 @@ void quaternionTest() {
 	 Let's test this in every way I can think of*/
 	Vec3 v(1.0, 0.0, 0.0);
 	Quaternion q = QMath::angleAxisRotation(90.0,Vec3(0.0,1.0,0.0));
-	Euler e2 = EMath::toEular(q);
+	Euler e2 = EMath::toEuler(q);
 	e2.print("from Q");
 	
 	q.print("The rotation Quaternion");
@@ -260,7 +258,7 @@ void inverseTest(){
 
 
 void planeTest() {
-	Plane p1(2.0f, -2.0f, 5.0f, 8.0f);
+	/*Plane p1(2.0f, -2.0f, 5.0f, 8.0f);
 	p1.print();
 	Vec3 v = Vec3(4.0f, -4.0f, 3.0f);
 	v.print();
@@ -278,14 +276,33 @@ void planeTest() {
 	Plane p4 = PMath::normalize(p3);
 	p4.print();
 	float distance4 = PMath::distance(v3, p4);
-	printf("%f vs. %f\n", distance4, -17.0 / 3.0);
+	printf("%f vs. %f\n", distance4, -17.0 / 3.0);*/
+
+	Matrix4 proj = MMath::perspective(52.8, 1.0, 1.0, 10.0) * MMath::lookAt(Vec3(0.0, 0.0, 8.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
+	
+	proj.print();
+
+#define INDEX(column,row) (proj[(row-1) * 4 + (column-1)])
 
 	
-	Plane p5(Vec3(1, 0, 0), 0);
-	Vec3 v5(-5, 0, 0);
-	float distance5 = PMath::distance(v5, p5);
-	printf("%f\n", distance5);
-	///Vec3 v2 =VMath::reflect(v, n);
+	Plane near(INDEX(4,1) + INDEX(3,1),
+			INDEX(4,2) + INDEX(3,2),
+			INDEX(4,3) + INDEX(3,3),
+			INDEX(4,4) + INDEX(3,4));
+	near = PMath::normalize(near);
+	near.print();
+	Plane far(INDEX(4,1) - INDEX(3,1),
+			INDEX(4,2) - INDEX(3,2),
+			INDEX(4,3) - INDEX(3,3),
+			INDEX(4,4) - INDEX(3,4));
+	far = PMath::normalize(far);
+	far.print();
+	
+	Vec3 v5(0.0, 0.0, 0.0);
+	float distance5 = PMath::distance(v5, near);
+	printf("near %f\n", distance5);
+	distance5 = PMath::distance(v5, far);
+	printf("far %f\n", distance5);
 }
 
 

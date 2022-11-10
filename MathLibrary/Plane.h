@@ -18,21 +18,16 @@ namespace  MATH {
 		/// Here's a set of constructors:
 		///http://www.songho.ca/math/plane/plane.html
 		///http://mathworld.wolfram.com/HessianNormalForm.html
-		/// If the plane is defined by a normal (that is normalized), 
+		/// If the plane is defined by a normal (that should normalized), 
 		/// the equation of a Plane is Ax + By + Cz - D = 0; where 
 		/// A,B,C are the values of the normal n <A,B,C> and D is the 
-		/// distance from the origin to the plane
+		/// distance from the origin to the plane.
+
+		/// If the the Vec3 is not normalized call PMath::normalize() to fix it  
 		Plane(Vec3 n, float d) {
 			set(n.x, n.y, n.z, -d);
-
-#ifdef _DEBUG  /// If in debug mode let's worry the normal being normalized
-			float mag = VMath::mag(n);
-			if (std::fabs(mag) - 1.0f > VERY_SMALL) {
-				std::string errorMsg = __FILE__ + __LINE__;
-				throw errorMsg.append(": The normal in the Plane constructor was not normalized");
-			}
-#endif // DEBUG
 		}
+
 		Plane() {
 			set(0.0f, 0.0f, 0.0f, 0.0f);
 		}
@@ -46,6 +41,11 @@ namespace  MATH {
 			set(n.x, n.y, n.z, VMath::dot(n, v0));
 		}
 
+		/// These just set numbers - be careful. This may not be in the Hessian normal form.  
+		/// Call PMath::normalize() to fix it
+		Plane(float x, float y, float z, float d) {
+			set(x, y, z, d);
+		}
 		/// A copy constructor
 		Plane(const Plane& p) {
 			set(p.x, p.y, p.z, p.d);
@@ -57,10 +57,6 @@ namespace  MATH {
 			return *this;
 		}
 
-		/// These just set numbers - be careful.  
-		Plane(float x, float y, float z, float d) {
-			set(x, y, z, d);
-		}
 		
 		/// print the values of the plane and add a comment if you wish
 		void print(const char* comment = nullptr) const {
