@@ -278,7 +278,7 @@ void planeTest() {
 	float distance4 = PMath::distance(v3, p4);
 	printf("%f vs. %f\n", distance4, -17.0 / 3.0);*/
 
-	Matrix4 proj = MMath::perspective(52.8, 1.0, 1.0, 10.0) * MMath::lookAt(Vec3(0.0, 0.0, 8.0), Vec3(0.0, 0.0, 0.0), Vec3(0.0, 1.0, 0.0));
+	Matrix4 proj = MMath::perspective(52.8f, 1.0f, 1.0f, 10.0f) * MMath::lookAt(Vec3(0.0f, 0.0f, 8.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f));
 	
 	proj.print();
 

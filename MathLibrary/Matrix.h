@@ -4,7 +4,10 @@
 #include "Vector.h"
 
 namespace  MATH {
-	/// These are the default vectors of the eye (camera) according to the right hand rule
+	/// These are the default vectors of the eye (camera) according to the left hand rule according
+	/// to OpenGL (What?!)
+	/// This means that the positive x-axis points to the right, the positive y-axis points up,
+	/// and the positive z-axis points towards the viewer.
 	///								+Y   -Z
 	///	                             |  /
 	///   origin(0.0f,0.0f,0.0f);    | /
@@ -13,6 +16,11 @@ namespace  MATH {
 	///                             /
 	///                           +Z
 	///
+	/// Vulkan uses a right-handed coordinate system, where the positive
+	/// x-axis points to the right, the positive y-axis points down, and the positive z-axis points away
+	/// from the viewer. This is the opposite of the left-handed coordinate system used in OpenGL.
+	/// All the math we are doing in right handed so what's the story? 
+	
 	class Matrix4 {
 
 		/// Let's just make sure that all is clear about how this matrix is layed out. 
@@ -49,10 +57,6 @@ namespace  MATH {
 			m[3] = x3;   m[7] = y3;   m[11] = z3; m[15] = w3;
 		}
 
-		/// Create the unit matrix probably the most common way of initializing a matrix
-		/// (If the argument within the constructor is pre-defined, as in this case 1.0f, the 
-		/// zero argument constructor will use 1.0f as the argument. Anything other than
-		/// 1.0f will be assigned to the float d)
 		inline Matrix4() {
 			loadIdentity();
 		}
@@ -70,7 +74,7 @@ namespace  MATH {
 		/// Grrr, I never liked mulipling maticies - but it needs to be done. 
 		/// Tested 3/7/2017 SSF
 
-		inline const Matrix4 operator*(const Matrix4& n) const {
+		inline const Matrix4 operator * (const Matrix4& n) const {
 			
 			/// This approach is about 8 nanoseconds faster, not because I unrolled the loops but because of the constructor, ask me. 
 			return Matrix4(
@@ -103,16 +107,16 @@ namespace  MATH {
 		
 		}
 
-		/// Multipling a matrix by itself is probably the most commom
+		/// Multipling a matrix by itself and another Matrix is very most commom
 		/// ("this" is the address of the matrix object itself. "*this" de-references that address
-		inline Matrix4& operator*=(const Matrix4& n) {
+		inline Matrix4& operator *= (const Matrix4& n) {
 			*this = *this * n;
 			return *this;
 		}
 
 		/// 2022 June, Multiply a Vec4 by this matrix and return the resulting Vec4, 
 		/// removed the divide by w in the result. 
-		inline  Vec4 operator* (const Vec4& v) const {
+		inline  Vec4 operator * (const Vec4& v) const {
 			float x = v.x * m[0] + v.y * m[4] + v.z * m[8] + v.w * m[12];
 			float y = v.x * m[1] + v.y * m[5] + v.z * m[9] + v.w * m[13];
 			float z = v.x * m[2] + v.y * m[6] + v.z * m[10] + v.w * m[14];
@@ -123,7 +127,7 @@ namespace  MATH {
 		/// Multiply a Vec3 by this matrix and return the resulting Vec3
 		/// Mathematicians would say this is impossible but this is just 
 		/// code.  I will assume the w-component of the Vec3 is 1.0.
-		inline  Vec3 operator* (const Vec3& v) const {
+		inline  Vec3 operator * (const Vec3& v) const {
 			float x = v.x * m[0] + v.y * m[4] + v.z * m[8] + 1.0f * m[12];
 			float y = v.x * m[1] + v.y * m[5] + v.z * m[9] + 1.0f * m[13];
 			float z = v.x * m[2] + v.y * m[6] + v.z * m[10] + 1.0f * m[14];

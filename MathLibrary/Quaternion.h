@@ -4,7 +4,34 @@
 #include "VMath.h"
 #include "Matrix.h"
 
-///A quarternion can be written as a scalar plus a 3-vector (Vec3) component
+/***
+A quaternion is a mathematical object that can be used to represent rotations in 3D space.
+It is a 4-dimensional extension of the complex numbers, and it consists of a scalar component (w)
+and a 3-vector component (ijk).
+
+Quaternions are often used in computer graphics, robotics, and aerospace engineering to represent
+and manipulate rotations in a more efficient and stable way than traditional rotation matrices. 
+They can be used to interpolate between two orientations in 3D space, and to avoid problems such
+as gimbal lock and singularities that can occur when using Euler angles.
+
+Quaternions can be represented in the form q = w + xi + yj + zk, where w, x, y, and z are real numbers,
+and i, j, and k are imaginary units that satisfy the following properties: i^2 = j^2 = k^2 = ijk = -1.
+
+Quaternions can be added, subtracted, and multiplied, and the multiplication is not commutative. 
+The multiplication of two quaternions can be used to represent a rotation of one quaternion followed
+by a rotation of the other quaternion.
+
+The norm of a quaternion is defined as the square root of the sum of the squares of the components and
+is also known as the magnitude of the quaternion.
+
+A unit quaternion is a quaternion with a magnitude of 1. Unit quaternions can be used to represent
+rotations without scaling.
+
+Quaternions have many advantages over other representations of rotations in 3D space, such as Euler angles and rotation matrices, 
+including being more efficient to compute, more robust to numerical errors and gimbal lock, and more convenient to interpolate and integrate.
+***/
+
+/// A quarternion can be written as a scalar plus a 3-vector (Vec3) component
 
 namespace  MATH {
 	struct Quaternion {
@@ -21,11 +48,13 @@ namespace  MATH {
 			w = w_; ijk.x = ijk_.x; ijk.y = ijk_.y; ijk.z = ijk_.z;
 		}
 
-		/// This is the unit quaterion by definition 
+		/// Default constructor that sets the quaternion to the unit quaternion 
 		inline Quaternion() {
 			set(1.0f, 0.0f, 0.0f, 0.0f);
 		}
 
+		/// Another utility function to set the values of the quaternion
+        /// w_ is the scalar component and ijk_ is the vector component
 		inline Quaternion(float w_, const Vec3& ijk_) {
 			set(w_, ijk_.x, ijk_.y, ijk_.z);
 		}
@@ -46,10 +75,14 @@ namespace  MATH {
 			return Quaternion(-w, Vec3(-ijk.x, -ijk.y, -ijk.z));
 		}
 
+			// 2022-02-12 Umer Noor edit. I think there is a bug here
+			// I'll change the Vec3 on the stack to be ijk_result and
+			// see if that helps. Compiler might be grabbing the ijk member
+			// variable in the return line rather than the stack variable
 		/// Multiply a two quaternions - using the right-hand rule 
 		/// 2022-02-12 Scott edit. Worried that Umer uncovered a bug in my code,
 		/// I derived the multiply over again (this time less sexy) and it seems to work 
-		/// correctly.
+		/// correctly, Thanks Umer
 		inline const Quaternion operator * (const Quaternion& q) const {
 			Quaternion result;
 			result.w = (w * q.w) - (ijk.x * q.ijk.x) - (ijk.y * q.ijk.y) - (ijk.z * q.ijk.z);
@@ -57,15 +90,7 @@ namespace  MATH {
 			result.ijk.y = (w * q.ijk.y) + (ijk.y * q.w) + (ijk.x * q.ijk.z) - (ijk.z * q.ijk.x);
 			result.ijk.z = (w * q.ijk.z) + (ijk.z * q.w) + (ijk.y * q.ijk.x) - (ijk.x * q.ijk.y);
 			return result;
-			// 2022-02-12 Umer Noor edit. I think there is a bug here
-			// I'll change the Vec3 on the stack to be ijk_result and
-			// see if that helps. Compiler might be grabbing the ijk member
-			// variable in the return line rather than the stack variable
-
-			/// Perhaps too sexy
-			/// Vec3 ijk(w * q.ijk + q.w * ijk + VMath::cross(ijk, q.ijk));
-			/// Vec3 ijk_result((w * q.ijk) + (q.w * ijk) + VMath::cross(ijk, q.ijk));
-			/// return Quaternion(w * q.w - VMath::dot(ijk, q.ijk), ijk_result);
+			
 		}
 
 		inline const Quaternion& operator *= (const Quaternion& q) {
@@ -115,6 +140,7 @@ namespace  MATH {
 			Quaternion result = *this * p;
 			return result.ijk;
 		}
+
 		/// Multiply a Vec3 by a Quaternion (Vec3 * Quaternion) 
 		friend Vec3 operator * (const Vec3 v, const Quaternion& q) {
 			Quaternion qv(0.0f, v);
@@ -125,9 +151,7 @@ namespace  MATH {
 		/// Seriously, the tilde ~ is the complement operator not the 
 		///  conjugate - but it was for fun. 
 		inline Quaternion operator~() { return Quaternion(w, -ijk); }
-		/////////////////////////////////////////////////////////////////////////
-
-
+		
 	};
 }
 #endif
