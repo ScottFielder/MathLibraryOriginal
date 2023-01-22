@@ -10,13 +10,13 @@ Plane PMath::normalize(const Plane &p) {
 
 /// Assuming the Hessian normal form of the plane 
 float PMath::distance(const Vec3 &v, const Plane &p) {
-	Vec3 n(p.x, p.y, p.z); /// Copy the normal out of the plane
+	Vec3 n = p; /// Extract the normal from the plane
 	return VMath::dot(n, v) + p.d;
 }
 
 
 /// Reflect an  incident vector off the normal of a plane 
 Vec3 PMath::reflect(const Vec3 &v, const Plane &p) {
-	float lamda = 2.0f * VMath::dot(p, v);
-	return v + lamda * p;
+	Vec3 n = p; /// Extract the normal from the plane
+	return v - (2.0f * VMath::dot(n, v)) * n;
 }
