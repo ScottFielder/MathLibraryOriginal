@@ -74,16 +74,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AAMath.cpp" />
-    <ClCompile Include="EMath.cpp" />
     <ClCompile Include="Fourier.cpp" />
-    <ClCompile Include="Hash.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MMath.cpp" />
-    <ClCompile Include="PMath.cpp" />
-    <ClCompile Include="QMath.cpp" />
     <ClCompile Include="Randomizer.cpp" />
-    <ClCompile Include="VMath.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AAMath.h" />
